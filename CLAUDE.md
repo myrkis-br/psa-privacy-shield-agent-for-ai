@@ -21,14 +21,16 @@ Os outros agentes estão definidos em:
 
 ## 2. Regra de Ouro — NUNCA VIOLAR
 
-> **Nenhum dado real, nome, CPF, CNPJ, valor, endereço ou qualquer
-> informação identificável pode ser incluído em suas respostas ou
-> enviado para processamento externo.**
+> **Nenhum dado real, nome, CPF, CNPJ, valor, endereço, NOME DE ARQUIVO
+> ou qualquer informação identificável pode ser incluído em suas respostas
+> ou enviado para processamento externo.**
 
-Antes de qualquer análise que envolva dados do usuário, pergunte:
-*"Estes dados já foram anonimizados pelo PSA Guardião?"*
+Antes de qualquer análise que envolva dados do usuário:
+1. **Registre o arquivo** para obter um código genérico (DOC_NNN)
+2. **Use APENAS o código genérico** em todas as suas respostas
+3. **Execute o PSA Guardião** para anonimizar o conteúdo
 
-Se a resposta for não → execute o PSA Guardião primeiro.
+Se os dados ainda não foram anonimizados → execute o PSA Guardião primeiro.
 
 ---
 
@@ -44,9 +46,10 @@ psa-project/
 │   ├── real/                ⛔ PROTEGIDO — nunca leia nem exiba conteúdo
 │   ├── samples/             ⛔ PROTEGIDO — amostras pré-anonimização
 │   ├── anonymized/          ✅ Pode ser usado para análise
-│   └── maps/                ⛔ PROTEGIDO — mapas real↔fake
+│   └── maps/                ⛔ PROTEGIDO — mapas real↔fake + file_registry.json
 ├── scripts/
 │   ├── psa.py               Interface unificada (use este!)
+│   ├── file_registry.py     Registro de nomes → códigos genéricos (DOC_NNN)
 │   ├── anonymizer.py        CSV / XLSX (com text_engine em texto livre)
 │   ├── anonymize_document.py  DOCX / TXT
 │   ├── anonymize_pdf.py     PDF
@@ -63,24 +66,38 @@ psa-project/
 ## 4. Fluxo Obrigatório
 
 ```
-Usuário → Comandante → PSA Guardião (anonimiza) → Agente Especialista
-                                                          ↓
-Usuário ← Comandante ← execução local com dados reais ← código/análise
+Usuário → Comandante → Registro (DOC_NNN) → PSA Guardião (anonimiza) → Agente Especialista
+                                                                              ↓
+Usuário ← Comandante (só usa DOC_NNN) ← execução local com dados reais ← código/análise
 ```
 
 ### Quando o usuário fornece um arquivo para análise:
 
-1. **Identificar** o tipo de arquivo
-2. **Executar** o PSA Guardião:
+1. **Registrar** o arquivo para obter código genérico:
    ```bash
-   python3 scripts/psa.py data/real/<arquivo>
+   python3 scripts/psa.py --register data/real/<arquivo>
    ```
+   O comando retorna apenas o código (ex: `DOC_001.xlsx`). A partir daqui,
+   **usar SOMENTE o código genérico** em todas as respostas.
+2. **Executar** o PSA Guardião usando o código:
+   ```bash
+   python3 scripts/psa.py DOC_001
+   ```
+   (Ou em um único passo: `python3 scripts/psa.py data/real/<arquivo>`
+   que registra automaticamente + anonimiza)
 3. **Confirmar** que o arquivo anonimizado está em `data/anonymized/`
 4. **Ler APENAS o arquivo anonimizado** em `data/anonymized/` para análise
 5. **NÃO ler** o mapa em `data/maps/` — ele contém correspondências reais
 6. **Realizar a análise** com base nos dados anonimizados
-7. **Gerar código** que acessa `data/real/` para execução local
-8. **Apresentar resultado** ao usuário
+7. **Gerar código** que usa o código DOC_NNN nos comentários (mas `data/real/` no path real para execução local)
+8. **Apresentar resultado** ao usuário — **NUNCA mencionar o nome real do arquivo**
+
+### REGRA: Nomes de arquivos nas respostas
+
+- **NUNCA** mencione o nome real do arquivo na conversa (ex: ~~"clientes.xlsx"~~)
+- **SEMPRE** use o código genérico (ex: "DOC_001.xlsx")
+- Se o usuário mencionar o nome real, registre imediatamente e responda usando o código
+- O código gerado para execução local pode usar o caminho real (roda apenas no Mac do usuário)
 
 **Nota sobre mapas**: O mapa em `data/maps/` existe apenas para referência técnica
 do sistema. O Claude NÃO deve lê-lo, pois contém correspondências entre dados
@@ -106,17 +123,34 @@ Você **pode**:
 
 ## 6. Comandos do PSA
 
-### Anonimizar um arquivo (automático)
+### Registrar arquivo (obter código genérico)
+```bash
+python3 scripts/psa.py --register data/real/<arquivo>
+python3 scripts/psa.py --register data/real/           # pasta inteira
+```
+
+### Listar arquivos registrados
+```bash
+python3 scripts/psa.py --list-files
+```
+
+### Anonimizar por código genérico (preferível)
+```bash
+python3 scripts/psa.py DOC_001
+python3 scripts/psa.py DOC_001 --sample 50
+```
+
+### Anonimizar por caminho (registro automático + anonimização)
 ```bash
 python3 scripts/psa.py data/real/<arquivo>
 ```
 
 ### Opções de amostragem
 ```bash
-python3 scripts/psa.py data/real/planilha.xlsx --sample 50
-python3 scripts/psa.py data/real/relatorio.pdf --pages 5
-python3 scripts/psa.py data/real/contrato.docx --paragraphs 15
-python3 scripts/psa.py data/real/pitch.pptx --slides 10
+python3 scripts/psa.py DOC_001 --sample 50        # planilha: 50 linhas
+python3 scripts/psa.py DOC_002 --pages 5           # PDF: 5 páginas
+python3 scripts/psa.py DOC_003 --paragraphs 15     # documento: 15 parágrafos
+python3 scripts/psa.py DOC_004 --slides 10          # apresentação: 10 slides
 ```
 
 ### Processar pasta inteira
@@ -138,10 +172,12 @@ python3 scripts/psa.py data/real/
 ## 7. Protocolo por Tipo de Pedido
 
 ### "Analise esta planilha / arquivo"
-1. Execute `python3 scripts/psa.py data/real/<arquivo>`
-2. Leia `data/anonymized/anon_<arquivo>_<timestamp>.<ext>`
-3. Realize a análise nos dados anonimizados
-4. Gere código Python que usa `data/real/<arquivo>` para execução local
+1. Registre: `python3 scripts/psa.py --register data/real/<arquivo>`
+2. Anonimize: `python3 scripts/psa.py DOC_NNN`
+3. Leia `data/anonymized/anon_<...>_<timestamp>.<ext>`
+4. Realize a análise nos dados anonimizados
+5. Gere código Python que usa `data/real/` para execução local
+6. Nas respostas, refira-se ao arquivo APENAS como DOC_NNN
 
 ### "Faça um relatório / dashboard"
 1. Anonimize os dados necessários (passo acima)
@@ -182,9 +218,10 @@ pip3 install <pacote>
 
 Execute mentalmente antes de qualquer ação com dados:
 
-- [ ] O arquivo está em `data/real/`? → Execute PSA primeiro
+- [ ] O arquivo está em `data/real/`? → Registre primeiro, depois execute PSA
 - [ ] O arquivo está em `data/anonymized/`? → Pode prosseguir
 - [ ] Vou exibir dados na resposta? → São dados anonimizados?
+- [ ] Vou mencionar o nome do arquivo? → Usar APENAS código DOC_NNN
 - [ ] O código que gero acessa `data/real/`? → Correto (execução local)
 - [ ] O código que gero acessa `data/anonymized/`? → Correto (análise)
 - [ ] Vou criar arquivo em `data/real/`? → Apenas se for script de teste

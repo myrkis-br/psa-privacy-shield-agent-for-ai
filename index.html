@@ -289,10 +289,107 @@
   [data-lang] { display: none; }
   [data-lang].active { display: block; }
   span[data-lang].active { display: inline; }
+
+  /* --- 19 Passos --- */
+  .steps-section {
+    position: relative;
+    z-index: 1;
+    padding: 5rem 2rem 4rem;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+  .steps-headline {
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+  .steps-headline h2 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    letter-spacing: -0.02em;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+  }
+  .steps-headline h2 em { font-style: normal; color: var(--accent); }
+  .steps-callout {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+  .steps-callout p {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 400;
+    line-height: 1.7;
+    color: var(--text);
+    max-width: 680px;
+    margin: 0.4rem auto;
+  }
+  .steps-callout strong { color: var(--accent3); font-weight: 500; }
+  .steps-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+  }
+  .steps-table thead th {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0.7rem 0.6rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .steps-table tbody td {
+    padding: 0.55rem 0.6rem;
+    border-bottom: 1px solid var(--border2);
+    vertical-align: middle;
+    color: var(--text);
+    font-weight: 300;
+  }
+  .steps-table tbody tr.step-local td:first-child {
+    border-left: 3px solid var(--accent3);
+  }
+  .steps-table tbody tr.step-cloud td:first-child {
+    border-left: 3px solid var(--accent);
+  }
+  .steps-table .step-num {
+    font-family: 'DM Mono', monospace;
+    font-weight: 500;
+    font-size: 0.75rem;
+    color: var(--muted);
+    width: 2.5rem;
+    text-align: center;
+  }
+  .steps-table .step-where {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    white-space: nowrap;
+  }
+  .step-local .step-where { color: var(--accent3); }
+  .step-cloud .step-where { color: var(--accent); }
+  .steps-table .step-icon { text-align: center; width: 3rem; }
+  .steps-summary {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+  }
+  .steps-summary .pill { font-size: 0.76rem; padding: 0.5rem 1.2rem; }
+  .steps-summary .pill strong.green { color: var(--accent3); }
+  .steps-summary .pill strong.blue { color: var(--accent); }
+
   @media (max-width: 600px) {
     nav { padding: 1rem 1.2rem; }
     .lang-btn { padding: 0.15rem 0.35rem; font-size: 0.62rem; }
     footer { padding: 1.2rem; flex-direction: column; text-align: center; }
+    .steps-section { padding: 3rem 1rem 2rem; }
+    .steps-table { font-size: 0.72rem; }
+    .steps-table thead th { font-size: 0.6rem; }
+    .steps-table td, .steps-table th { padding: 0.4rem 0.35rem; }
   }
 </style>
 </head>
@@ -394,6 +491,372 @@
     <span class="pill">Python · Open Source</span>
   </div>
 </main>
+
+<section class="steps-section">
+  <div class="steps-headline">
+    <h2>
+      <span data-lang="pt" class="active">Como funciona — <em>Os 19 Passos</em></span>
+      <span data-lang="en">How it works — <em>The 19 Steps</em></span>
+      <span data-lang="es">Cómo funciona — <em>Los 19 Pasos</em></span>
+      <span data-lang="zh">工作原理 — <em>19 个步骤</em></span>
+      <span data-lang="hi">यह कैसे काम करता है — <em>19 कदम</em></span>
+      <span data-lang="fr">Comment ça marche — <em>Les 19 étapes</em></span>
+    </h2>
+  </div>
+  <div class="steps-callout">
+    <p>
+      <span data-lang="pt" class="active"><strong>15 de 19 passos rodam 100% local. Seus dados reais jamais saem do seu computador.</strong></span>
+      <span data-lang="en"><strong>15 of 19 steps run 100% locally. Your real data never leaves your computer.</strong></span>
+      <span data-lang="es"><strong>15 de 19 pasos se ejecutan 100% local. Sus datos reales nunca salen de su computador.</strong></span>
+      <span data-lang="zh"><strong>19 个步骤中有 15 个 100% 在本地运行。您的真实数据永远不会离开您的计算机。</strong></span>
+      <span data-lang="hi"><strong>19 में से 15 कदम 100% स्थानीय रूप से चलते हैं। आपका वास्तविक डेटा कभी भी आपके कंप्यूटर से बाहर नहीं जाता।</strong></span>
+      <span data-lang="fr"><strong>15 des 19 étapes s'exécutent 100% en local. Vos données réelles ne quittent jamais votre ordinateur.</strong></span>
+    </p>
+    <p>
+      <span data-lang="pt" class="active"><strong>Nem o nome do seu arquivo sai do computador. Seus dados começam protegidos do primeiro ao último passo.</strong></span>
+      <span data-lang="en"><strong>Not even your file name leaves the computer. Your data is protected from the first to the last step.</strong></span>
+      <span data-lang="es"><strong>Ni el nombre de su archivo sale del computador. Sus datos están protegidos del primer al último paso.</strong></span>
+      <span data-lang="zh"><strong>连您的文件名都不会离开计算机。您的数据从第一步到最后一步都受到保护。</strong></span>
+      <span data-lang="hi"><strong>आपकी फ़ाइल का नाम भी कंप्यूटर से बाहर नहीं जाता। आपका डेटा पहले से आखिरी कदम तक सुरक्षित है।</strong></span>
+      <span data-lang="fr"><strong>Même le nom de votre fichier ne quitte pas l'ordinateur. Vos données sont protégées de la première à la dernière étape.</strong></span>
+    </p>
+  </div>
+
+  <table class="steps-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>
+          <span data-lang="pt" class="active">O que acontece</span>
+          <span data-lang="en">What happens</span>
+          <span data-lang="es">Qué sucede</span>
+          <span data-lang="zh">发生了什么</span>
+          <span data-lang="hi">क्या होता है</span>
+          <span data-lang="fr">Ce qui se passe</span>
+        </th>
+        <th>
+          <span data-lang="pt" class="active">Onde</span>
+          <span data-lang="en">Where</span>
+          <span data-lang="es">Dónde</span>
+          <span data-lang="zh">位置</span>
+          <span data-lang="hi">कहाँ</span>
+          <span data-lang="fr">Où</span>
+        </th>
+        <th>Token?</th>
+        <th>
+          <span data-lang="pt" class="active">Dados saem?</span>
+          <span data-lang="en">Data leaves?</span>
+          <span data-lang="es">Salen datos?</span>
+          <span data-lang="zh">数据外泄?</span>
+          <span data-lang="hi">डेटा बाहर?</span>
+          <span data-lang="fr">Données sortent?</span>
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="step-local">
+        <td class="step-num">1</td>
+        <td>
+          <span data-lang="pt" class="active">Usuário entrega o arquivo ao PSA</span>
+          <span data-lang="en">User delivers file to PSA</span>
+          <span data-lang="es">Usuario entrega archivo al PSA</span>
+          <span data-lang="zh">用户将文件交给 PSA</span>
+          <span data-lang="hi">उपयोगकर्ता PSA को फ़ाइल देता है</span>
+          <span data-lang="fr">L'utilisateur remet le fichier au PSA</span>
+        </td>
+        <td class="step-where">💻 Local</td>
+        <td class="step-icon">❌</td>
+        <td>
+          <span data-lang="pt" class="active">❌ Não — nome protegido por código (DOC_001)</span>
+          <span data-lang="en">❌ No — name protected by code (DOC_001)</span>
+          <span data-lang="es">❌ No — nombre protegido por código (DOC_001)</span>
+          <span data-lang="zh">❌ 否 — 文件名由代码保护 (DOC_001)</span>
+          <span data-lang="hi">❌ नहीं — नाम कोड द्वारा सुरक्षित (DOC_001)</span>
+          <span data-lang="fr">❌ Non — nom protégé par code (DOC_001)</span>
+        </td>
+      </tr>
+      <tr class="step-local">
+        <td class="step-num">2</td>
+        <td>
+          <span data-lang="pt" class="active">PSA invoca o psa.py via código genérico</span>
+          <span data-lang="en">PSA invokes psa.py via generic code</span>
+          <span data-lang="es">PSA invoca psa.py vía código genérico</span>
+          <span data-lang="zh">PSA 通过通用代码调用 psa.py</span>
+          <span data-lang="hi">PSA जेनेरिक कोड के माध्यम से psa.py चलाता है</span>
+          <span data-lang="fr">PSA invoque psa.py via code générique</span>
+        </td>
+        <td class="step-where">💻 Local</td>
+        <td class="step-icon">❌</td>
+        <td class="step-icon">❌</td>
+      </tr>
+      <tr class="step-local">
+        <td class="step-num">3</td>
+        <td>
+          <span data-lang="pt" class="active">Valida segurança do arquivo</span>
+          <span data-lang="en">Validates file security</span>
+          <span data-lang="es">Valida seguridad del archivo</span>
+          <span data-lang="zh">验证文件安全性</span>
+          <span data-lang="hi">फ़ाइल सुरक्षा मान्य करता है</span>
+          <span data-lang="fr">Valide la sécurité du fichier</span>
+        </td>
+        <td class="step-where">💻 Local</td>
+        <td class="step-icon">❌</td>
+        <td class="step-icon">❌</td>
+      </tr>
+      <tr class="step-local">
+        <td class="step-num">4</td>
+        <td>
+          <span data-lang="pt" class="active">Detecta extensão e escolhe script correto</span>
+          <span data-lang="en">Detects extension and picks correct script</span>
+          <span data-lang="es">Detecta extensión y elige script correcto</span>
+          <span data-lang="zh">检测扩展名并选择正确的脚本</span>
+          <span data-lang="hi">एक्सटेंशन पहचानता है और सही स्क्रिप्ट चुनता है</span>
+          <span data-lang="fr">Détecte l'extension et choisit le script</span>
+        </td>
+        <td class="step-where">💻 Local</td>
+        <td class="step-icon">❌</td>
+        <td class="step-icon">❌</td>
+      </tr>
+      <tr class="step-local">
+        <td class="step-num">5</td>
+        <td>
+          <span data-lang="pt" class="active">Lê o arquivo real do disco</span>
+          <span data-lang="en">Reads the real file from disk</span>
+          <span data-lang="es">Lee el archivo real del disco</span>
+          <span data-lang="zh">从磁盘读取真实文件</span>
+          <span data-lang="hi">डिस्क से असली फ़ाइल पढ़ता है</span>
+          <span data-lang="fr">Lit le fichier réel du disque</span>
+        </td>
+        <td class="step-where">💻 Local</td>
+        <td class="step-icon">❌</td>
+        <td class="step-icon">❌</td>
+      </tr>
+      <tr class="step-local">
+        <td class="step-num">6</td>
+        <td>
+          <span data-lang="pt" class="active">Faz amostragem (padrão: 100 linhas)</span>
+          <span data-lang="en">Samples data (default: 100 rows)</span>
+          <span data-lang="es">Hace muestreo (predeterminado: 100 líneas)</span>
+          <span data-lang="zh">数据采样（默认：100 行）</span>
+          <span data-lang="hi">नमूना लेता है (डिफ़ॉल्ट: 100 पंक्तियाँ)</span>
+          <span data-lang="fr">Échantillonne (défaut : 100 lignes)</span>
+        </td>
+        <td class="step-where">💻 Local</td>
+        <td class="step-icon">❌</td>
+        <td class="step-icon">❌</td>
+      </tr>
+      <tr class="step-local">
+        <td class="step-num">7</td>
+        <td>
+          <span data-lang="pt" class="active">Detecta colunas sensíveis (70+ keywords)</span>
+          <span data-lang="en">Detects sensitive columns (70+ keywords)</span>
+          <span data-lang="es">Detecta columnas sensibles (70+ keywords)</span>
+          <span data-lang="zh">检测敏感列（70+ 关键词）</span>
+          <span data-lang="hi">संवेदनशील कॉलम पहचानता है (70+ कीवर्ड)</span>
+          <span data-lang="fr">Détecte colonnes sensibles (70+ mots-clés)</span>
+        </td>
+        <td class="step-where">💻 Local</td>
+        <td class="step-icon">❌</td>
+        <td class="step-icon">❌</td>
+      </tr>
+      <tr class="step-local">
+        <td class="step-num">8</td>
+        <td>
+          <span data-lang="pt" class="active">Renomeia colunas para COL_A, COL_B...</span>
+          <span data-lang="en">Renames columns to COL_A, COL_B...</span>
+          <span data-lang="es">Renombra columnas a COL_A, COL_B...</span>
+          <span data-lang="zh">将列重命名为 COL_A, COL_B...</span>
+          <span data-lang="hi">कॉलम का नाम COL_A, COL_B... में बदलता है</span>
+          <span data-lang="fr">Renomme les colonnes en COL_A, COL_B...</span>
+        </td>
+        <td class="step-where">💻 Local</td>
+        <td class="step-icon">❌</td>
+        <td class="step-icon">❌</td>
+      </tr>
+      <tr class="step-local">
+        <td class="step-num">9</td>
+        <td>
+          <span data-lang="pt" class="active">Anonimiza valores com Faker pt_BR offline</span>
+          <span data-lang="en">Anonymizes values with Faker pt_BR offline</span>
+          <span data-lang="es">Anonimiza valores con Faker pt_BR offline</span>
+          <span data-lang="zh">使用 Faker pt_BR 离线匿名化值</span>
+          <span data-lang="hi">Faker pt_BR ऑफ़लाइन से मान अनामीकृत करता है</span>
+          <span data-lang="fr">Anonymise les valeurs avec Faker pt_BR hors ligne</span>
+        </td>
+        <td class="step-where">💻 Local</td>
+        <td class="step-icon">❌</td>
+        <td class="step-icon">❌</td>
+      </tr>
+      <tr class="step-local">
+        <td class="step-num">10</td>
+        <td>
+          <span data-lang="pt" class="active">Varia valores financeiros em ±15%</span>
+          <span data-lang="en">Varies financial values by ±15%</span>
+          <span data-lang="es">Varía valores financieros en ±15%</span>
+          <span data-lang="zh">将财务值变化 ±15%</span>
+          <span data-lang="hi">वित्तीय मूल्यों को ±15% तक बदलता है</span>
+          <span data-lang="fr">Varie les valeurs financières de ±15%</span>
+        </td>
+        <td class="step-where">💻 Local</td>
+        <td class="step-icon">❌</td>
+        <td class="step-icon">❌</td>
+      </tr>
+      <tr class="step-local">
+        <td class="step-num">11</td>
+        <td>
+          <span data-lang="pt" class="active">Escaneia textos livres e substitui via regex</span>
+          <span data-lang="en">Scans free text and replaces via regex</span>
+          <span data-lang="es">Escanea textos libres y sustituye vía regex</span>
+          <span data-lang="zh">扫描自由文本并通过正则表达式替换</span>
+          <span data-lang="hi">फ्री टेक्स्ट स्कैन करता है और regex से बदलता है</span>
+          <span data-lang="fr">Scanne le texte libre et remplace via regex</span>
+        </td>
+        <td class="step-where">💻 Local</td>
+        <td class="step-icon">❌</td>
+        <td class="step-icon">❌</td>
+      </tr>
+      <tr class="step-local">
+        <td class="step-num">12</td>
+        <td>
+          <span data-lang="pt" class="active">Validação anti-vazamento — detectou dado real? Deleta tudo automaticamente</span>
+          <span data-lang="en">Anti-leak validation — real data detected? Deletes everything automatically</span>
+          <span data-lang="es">Validación anti-fuga — ¿detectó dato real? Elimina todo automáticamente</span>
+          <span data-lang="zh">防泄漏验证 — 检测到真实数据？自动删除所有内容</span>
+          <span data-lang="hi">एंटी-लीक सत्यापन — असली डेटा मिला? सब कुछ स्वचालित रूप से हटाता है</span>
+          <span data-lang="fr">Validation anti-fuite — donnée réelle détectée ? Supprime tout automatiquement</span>
+        </td>
+        <td class="step-where">💻 Local</td>
+        <td class="step-icon">❌</td>
+        <td class="step-icon">❌</td>
+      </tr>
+      <tr class="step-local">
+        <td class="step-num">13</td>
+        <td>
+          <span data-lang="pt" class="active">Salva arquivo anonimizado em data/anonymized/</span>
+          <span data-lang="en">Saves anonymized file to data/anonymized/</span>
+          <span data-lang="es">Guarda archivo anonimizado en data/anonymized/</span>
+          <span data-lang="zh">将匿名文件保存到 data/anonymized/</span>
+          <span data-lang="hi">अनामीकृत फ़ाइल data/anonymized/ में सहेजता है</span>
+          <span data-lang="fr">Enregistre le fichier anonymisé dans data/anonymized/</span>
+        </td>
+        <td class="step-where">💻 Local</td>
+        <td class="step-icon">❌</td>
+        <td class="step-icon">❌</td>
+      </tr>
+      <tr class="step-local">
+        <td class="step-num">14</td>
+        <td>
+          <span data-lang="pt" class="active">Salva mapa de correspondência em data/maps/</span>
+          <span data-lang="en">Saves correspondence map to data/maps/</span>
+          <span data-lang="es">Guarda mapa de correspondencia en data/maps/</span>
+          <span data-lang="zh">将对应映射保存到 data/maps/</span>
+          <span data-lang="hi">पत्राचार मानचित्र data/maps/ में सहेजता है</span>
+          <span data-lang="fr">Enregistre la carte de correspondance dans data/maps/</span>
+        </td>
+        <td class="step-where">💻 Local</td>
+        <td class="step-icon">❌</td>
+        <td class="step-icon">❌</td>
+      </tr>
+      <tr class="step-local">
+        <td class="step-num">15</td>
+        <td>
+          <span data-lang="pt" class="active">Salva log da operação em logs/</span>
+          <span data-lang="en">Saves operation log to logs/</span>
+          <span data-lang="es">Guarda log de operación en logs/</span>
+          <span data-lang="zh">将操作日志保存到 logs/</span>
+          <span data-lang="hi">ऑपरेशन लॉग logs/ में सहेजता है</span>
+          <span data-lang="fr">Enregistre le journal d'opération dans logs/</span>
+        </td>
+        <td class="step-where">💻 Local</td>
+        <td class="step-icon">❌</td>
+        <td class="step-icon">❌</td>
+      </tr>
+      <tr class="step-cloud">
+        <td class="step-num">16</td>
+        <td>
+          <span data-lang="pt" class="active">Claude/IA lê o arquivo anonimizado</span>
+          <span data-lang="en">Claude/AI reads the anonymized file</span>
+          <span data-lang="es">Claude/IA lee el archivo anonimizado</span>
+          <span data-lang="zh">Claude/AI 读取匿名文件</span>
+          <span data-lang="hi">Claude/AI अनामीकृत फ़ाइल पढ़ता है</span>
+          <span data-lang="fr">Claude/IA lit le fichier anonymisé</span>
+        </td>
+        <td class="step-where">☁️ Nuvem</td>
+        <td class="step-icon">✅</td>
+        <td>
+          <span data-lang="pt" class="active">✅ Só dados fictícios</span>
+          <span data-lang="en">✅ Only fictitious data</span>
+          <span data-lang="es">✅ Solo datos ficticios</span>
+          <span data-lang="zh">✅ 仅虚构数据</span>
+          <span data-lang="hi">✅ केवल काल्पनिक डेटा</span>
+          <span data-lang="fr">✅ Données fictives uniquement</span>
+        </td>
+      </tr>
+      <tr class="step-cloud">
+        <td class="step-num">17</td>
+        <td>
+          <span data-lang="pt" class="active">Claude/IA realiza análise e responde</span>
+          <span data-lang="en">Claude/AI performs analysis and responds</span>
+          <span data-lang="es">Claude/IA realiza análisis y responde</span>
+          <span data-lang="zh">Claude/AI 进行分析并响应</span>
+          <span data-lang="hi">Claude/AI विश्लेषण करता है और जवाब देता है</span>
+          <span data-lang="fr">Claude/IA effectue l'analyse et répond</span>
+        </td>
+        <td class="step-where">☁️ Nuvem</td>
+        <td class="step-icon">✅</td>
+        <td>
+          <span data-lang="pt" class="active">✅ Só resultados fictícios</span>
+          <span data-lang="en">✅ Only fictitious results</span>
+          <span data-lang="es">✅ Solo resultados ficticios</span>
+          <span data-lang="zh">✅ 仅虚构结果</span>
+          <span data-lang="hi">✅ केवल काल्पनिक परिणाम</span>
+          <span data-lang="fr">✅ Résultats fictifs uniquement</span>
+        </td>
+      </tr>
+      <tr class="step-cloud">
+        <td class="step-num">18</td>
+        <td>
+          <span data-lang="pt" class="active">Claude/IA gera script Python para rodar localmente</span>
+          <span data-lang="en">Claude/AI generates Python script to run locally</span>
+          <span data-lang="es">Claude/IA genera script Python para correr localmente</span>
+          <span data-lang="zh">Claude/AI 生成本地运行的 Python 脚本</span>
+          <span data-lang="hi">Claude/AI स्थानीय रूप से चलाने के लिए Python स्क्रिप्ट बनाता है</span>
+          <span data-lang="fr">Claude/IA génère un script Python pour exécution locale</span>
+        </td>
+        <td class="step-where">☁️ Nuvem</td>
+        <td class="step-icon">✅</td>
+        <td>
+          <span data-lang="pt" class="active">✅ Só o código, sem dados</span>
+          <span data-lang="en">✅ Only code, no data</span>
+          <span data-lang="es">✅ Solo el código, sin datos</span>
+          <span data-lang="zh">✅ 仅代码，无数据</span>
+          <span data-lang="hi">✅ केवल कोड, कोई डेटा नहीं</span>
+          <span data-lang="fr">✅ Code uniquement, pas de données</span>
+        </td>
+      </tr>
+      <tr class="step-local">
+        <td class="step-num">19</td>
+        <td>
+          <span data-lang="pt" class="active">Script roda nos dados reais localmente → results/</span>
+          <span data-lang="en">Script runs on real data locally → results/</span>
+          <span data-lang="es">Script corre en datos reales localmente → results/</span>
+          <span data-lang="zh">脚本在本地真实数据上运行 → results/</span>
+          <span data-lang="hi">स्क्रिप्ट स्थानीय रूप से असली डेटा पर चलता है → results/</span>
+          <span data-lang="fr">Le script s'exécute localement sur les données réelles → results/</span>
+        </td>
+        <td class="step-where">💻 Local</td>
+        <td class="step-icon">❌</td>
+        <td class="step-icon">❌</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="steps-summary">
+    <span class="pill"><strong class="green">15</strong> <span data-lang="pt" class="active">passos locais</span><span data-lang="en">local steps</span><span data-lang="es">pasos locales</span><span data-lang="zh">本地步骤</span><span data-lang="hi">स्थानीय कदम</span><span data-lang="fr">étapes locales</span></span>
+    <span class="pill"><strong class="blue">4</strong> <span data-lang="pt" class="active">passos nuvem</span><span data-lang="en">cloud steps</span><span data-lang="es">pasos nube</span><span data-lang="zh">云步骤</span><span data-lang="hi">क्लाउड कदम</span><span data-lang="fr">étapes cloud</span></span>
+    <span class="pill"><strong class="green">0</strong> <span data-lang="pt" class="active">dados reais expostos</span><span data-lang="en">real data exposed</span><span data-lang="es">datos reales expuestos</span><span data-lang="zh">真实数据暴露</span><span data-lang="hi">असली डेटा उजागर</span><span data-lang="fr">données réelles exposées</span></span>
+  </div>
+</section>
 
 <footer>
   <div class="footer-copy">© 2026 PSA — Privacy Shield Agent</div>

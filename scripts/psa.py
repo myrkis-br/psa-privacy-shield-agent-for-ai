@@ -6,6 +6,9 @@ Interface unificada do PSA Guardião
 Detecta automaticamente o tipo de arquivo e chama o anonimizador correto.
 Ponto de entrada principal para toda operação de anonimização.
 
+Nomes de arquivos reais NUNCA aparecem na saída — são substituídos por
+códigos genéricos (DOC_001, DOC_002, etc.) via file_registry.
+
 Formatos suportados:
   Planilhas    : .csv, .xlsx, .xls
   Documentos   : .docx, .txt
@@ -14,21 +17,14 @@ Formatos suportados:
   Emails       : .eml, .msg
 
 Uso:
-  python3 scripts/psa.py <arquivo>                     # anonimiza com padrões
-  python3 scripts/psa.py <arquivo> --sample 50         # planilha: 50 linhas
-  python3 scripts/psa.py <arquivo> --pages 5           # PDF: 5 páginas
-  python3 scripts/psa.py <arquivo> --paragraphs 30     # documento: 30 parágrafos
-  python3 scripts/psa.py <arquivo> --slides 20         # apresentação: 20 slides
-  python3 scripts/psa.py data/real/                    # processa pasta inteira
-  python3 scripts/psa.py --list-supported              # lista formatos suportados
-
-Exemplos:
-  python3 scripts/psa.py data/real/clientes.xlsx
-  python3 scripts/psa.py data/real/contrato.docx --paragraphs 15
-  python3 scripts/psa.py data/real/relatorio.pdf --pages 4
-  python3 scripts/psa.py data/real/pitch.pptx
-  python3 scripts/psa.py data/real/proposta.eml
-  python3 scripts/psa.py data/real/                    # tudo na pasta
+  python3 scripts/psa.py --register data/real/clientes.xlsx   # registra e retorna código
+  python3 scripts/psa.py --register data/real/                # registra pasta inteira
+  python3 scripts/psa.py --list-files                         # lista arquivos registrados
+  python3 scripts/psa.py DOC_001                              # anonimiza pelo código
+  python3 scripts/psa.py DOC_001 --sample 50                  # com opções
+  python3 scripts/psa.py data/real/clientes.xlsx              # registro automático + anonimiza
+  python3 scripts/psa.py data/real/                           # processa pasta inteira
+  python3 scripts/psa.py --list-supported                     # lista formatos suportados
 """
 
 import sys
@@ -119,7 +115,7 @@ def _security_check(path: Path) -> bool:
         if str(resolved).startswith(str(blocked)):
             dir_name = blocked.name
             log.error(
-                f"BLOQUEADO: '{path.name}' está em diretório protegido ({dir_name}/).\n"
+                f"BLOQUEADO: arquivo está em diretório protegido ({dir_name}/).\n"
                 f"O PSA só processa arquivos em data/real/ ou caminhos externos."
             )
             return False
@@ -152,7 +148,7 @@ def _anonymize(
         return None
 
     kind, label = SUPPORTED[suffix]
-    log.info(f"Arquivo detectado como: {label} ({suffix})")
+    log.info(f"Tipo detectado: {label} ({suffix})")
 
     try:
         if kind == "spreadsheet":
@@ -179,7 +175,7 @@ def _anonymize(
         log.error(f"Dependência ausente: {e}")
         return None
     except Exception as e:
-        log.error(f"Erro ao anonimizar '{input_path.name}': {e}")
+        log.error(f"Erro ao anonimizar: {e}")
         import traceback
         traceback.print_exc()
         return None
@@ -193,35 +189,44 @@ def _process_folder(
     slides: int,
 ) -> List[dict]:
     """Processa todos os arquivos suportados em uma pasta (não recursivo)."""
+    from file_registry import register_file, get_code_for_path
+
     files = [
         f for f in folder.iterdir()
         if f.is_file() and f.suffix.lower() in SUPPORTED
     ]
 
     if not files:
-        log.warning(f"Nenhum arquivo suportado encontrado em: {folder}")
+        log.warning(f"Nenhum arquivo suportado encontrado na pasta")
         return []
 
-    log.info(f"Processando {len(files)} arquivo(s) em: {folder}")
+    log.info(f"Processando {len(files)} arquivo(s)")
 
     results = []
     for f in sorted(files):
         log.info(f"\n{'─' * 50}")
         # H-10: Aplica security_check a cada arquivo na pasta
         if not _security_check(f):
-            results.append({"arquivo": f.name, "status": "erro"})
+            code = get_code_for_path(f)
+            display = code if code else "[PROTEGIDO]"
+            results.append({"arquivo": display, "status": "erro"})
             continue
+
+        # Registra automaticamente antes de processar
+        code, suffix = register_file(f)
+        display = f"{code}{suffix}"
+
         result = _anonymize(f, sample=sample, pages=pages, paragraphs=paragraphs, slides=slides)
         if result:
             anon_path, map_path = result
             results.append({
-                "arquivo": f.name,
+                "arquivo": display,
                 "status": "ok",
                 "anonimizado": str(anon_path),
                 "mapa": str(map_path),
             })
         else:
-            results.append({"arquivo": f.name, "status": "erro"})
+            results.append({"arquivo": display, "status": "erro"})
 
     return results
 
@@ -230,12 +235,12 @@ def _process_folder(
 # Relatório de operação
 # ---------------------------------------------------------------------------
 
-def _save_operation_log(results: List[dict], input_path: Path):
+def _save_operation_log(results: List[dict], input_label: str):
     """Salva log estruturado da operação em logs/."""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     log_data = {
         "timestamp": datetime.now().isoformat(),
-        "entrada": str(input_path),
+        "entrada": input_label,
         "total": len(results),
         "sucesso": sum(1 for r in results if r.get("status") == "ok"),
         "erro": sum(1 for r in results if r.get("status") == "erro"),
@@ -248,7 +253,7 @@ def _save_operation_log(results: List[dict], input_path: Path):
 
 
 def _print_summary(results: List[dict]):
-    """Exibe tabela resumo no terminal."""
+    """Exibe tabela resumo no terminal. Usa apenas códigos genéricos."""
     print("\n" + "=" * 70)
     print("PSA GUARDIÃO — RESUMO DA OPERAÇÃO")
     print("=" * 70)
@@ -268,6 +273,61 @@ def _print_summary(results: List[dict]):
 
 
 # ---------------------------------------------------------------------------
+# Comandos do File Registry
+# ---------------------------------------------------------------------------
+
+def _cmd_register(entrada: str) -> None:
+    """Registra arquivo(s) e exibe apenas os códigos genéricos."""
+    from file_registry import register_file, register_folder
+
+    input_path = Path(entrada)
+    if not input_path.exists():
+        log.error(f"Caminho não encontrado: {input_path}")
+        sys.exit(1)
+
+    print("\n" + "=" * 70)
+    print("PSA — REGISTRO DE ARQUIVOS")
+    print("Nomes reais protegidos. Use os códigos abaixo na conversa.")
+    print("=" * 70)
+
+    if input_path.is_dir():
+        results = register_folder(input_path, set(SUPPORTED.keys()))
+        if not results:
+            print("  Nenhum arquivo suportado encontrado na pasta.")
+            sys.exit(1)
+        for code, suffix, _real_name in results:
+            print(f"  {code}{suffix}")
+    else:
+        code, suffix = register_file(input_path)
+        print(f"  {code}{suffix}")
+
+    print("=" * 70)
+    print("Use estes códigos para anonimizar. Ex: python3 scripts/psa.py DOC_001")
+    sys.exit(0)
+
+
+def _cmd_list_files() -> None:
+    """Lista arquivos registrados (apenas códigos, sem nomes reais)."""
+    from file_registry import list_registered
+
+    entries = list_registered()
+
+    print("\n" + "=" * 70)
+    print("PSA — ARQUIVOS REGISTRADOS")
+    print("=" * 70)
+
+    if not entries:
+        print("  Nenhum arquivo registrado ainda.")
+        print("  Use: python3 scripts/psa.py --register data/real/<arquivo>")
+    else:
+        for e in entries:
+            print(f"  {e['code']}{e['suffix']}  (registrado em {e['registered_at'][:10]})")
+
+    print("=" * 70)
+    sys.exit(0)
+
+
+# ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
@@ -284,18 +344,27 @@ Formatos suportados:
   Emails       : .eml, .msg
 
 Exemplos:
-  python3 scripts/psa.py data/real/clientes.xlsx
-  python3 scripts/psa.py data/real/contrato.docx --paragraphs 15
-  python3 scripts/psa.py data/real/relatorio.pdf --pages 4
-  python3 scripts/psa.py data/real/pitch.pptx --slides 10
-  python3 scripts/psa.py data/real/proposta.eml
+  python3 scripts/psa.py --register data/real/clientes.xlsx   # registra
+  python3 scripts/psa.py --register data/real/                # registra pasta
+  python3 scripts/psa.py --list-files                         # lista registrados
+  python3 scripts/psa.py DOC_001                              # anonimiza por código
+  python3 scripts/psa.py DOC_001 --sample 50                  # com opções
+  python3 scripts/psa.py data/real/clientes.xlsx              # auto-registra + anonimiza
   python3 scripts/psa.py data/real/        (processa pasta inteira)
         """,
     )
     parser.add_argument(
         "entrada",
         nargs="?",
-        help="Arquivo ou pasta a anonimizar (pasta: processa todos os arquivos suportados)",
+        help="Código DOC_NNN, arquivo ou pasta a anonimizar",
+    )
+    parser.add_argument(
+        "--register", metavar="PATH",
+        help="Registra arquivo/pasta e retorna código genérico (sem anonimizar)",
+    )
+    parser.add_argument(
+        "--list-files", action="store_true",
+        help="Lista arquivos registrados (apenas códigos, sem nomes reais)",
     )
     parser.add_argument(
         "--sample", type=int, default=100, metavar="N",
@@ -320,6 +389,13 @@ Exemplos:
 
     args = parser.parse_args()
 
+    # --- Comandos do File Registry ---
+    if args.list_files:
+        _cmd_list_files()
+
+    if args.register:
+        _cmd_register(args.register)
+
     if args.list_supported:
         print("\nFormatos suportados pelo PSA:\n")
         for ext, (kind, label) in sorted(SUPPORTED.items()):
@@ -331,35 +407,60 @@ Exemplos:
         parser.print_help()
         sys.exit(1)
 
-    input_path = Path(args.entrada)
+    # --- Resolução de entrada: código DOC_NNN ou caminho real ---
+    from file_registry import is_doc_code, resolve_code, register_file, get_code_for_path
 
-    if not input_path.exists():
-        log.error(f"Caminho não encontrado: {input_path}")
-        sys.exit(1)
+    entrada = args.entrada
+
+    if is_doc_code(entrada):
+        # Entrada é código genérico → resolve para caminho real
+        input_path = resolve_code(entrada)
+        if input_path is None:
+            log.error(f"Código não encontrado no registro: {entrada}")
+            log.error("Use --list-files para ver os códigos disponíveis.")
+            sys.exit(1)
+        doc_code = entrada.upper().split(".")[0]
+        doc_display = f"{doc_code}{input_path.suffix.lower()}"
+    else:
+        # Entrada é caminho real → registra automaticamente
+        input_path = Path(entrada)
+        if not input_path.exists():
+            log.error(f"Caminho não encontrado: {input_path}")
+            sys.exit(1)
+
+        # Se for pasta, processa com registro automático
+        if input_path.is_dir():
+            print("\n" + "=" * 70)
+            print("PSA — PRIVACY SHIELD AGENT")
+            print("Guardião ativo. Nomes reais protegidos por códigos genéricos.")
+            print("=" * 70)
+
+            if not _security_check(input_path / "_dummy"):
+                sys.exit(1)
+            results = _process_folder(
+                input_path,
+                sample=args.sample,
+                pages=args.pages,
+                paragraphs=args.paragraphs,
+                slides=args.slides,
+            )
+            if results:
+                log_path = _save_operation_log(results, "[PASTA]")
+                _print_summary(results)
+                print(f"\n  Log da operação: {log_path}")
+            n_err = sum(1 for r in results if r.get("status") == "erro")
+            sys.exit(1 if n_err else 0)
+
+        # Arquivo único → registra e continua
+        code, suffix = register_file(input_path)
+        doc_code = code
+        doc_display = f"{code}{suffix}"
 
     print("\n" + "=" * 70)
     print("PSA — PRIVACY SHIELD AGENT")
-    print("Guardião ativo. Nenhum dado real sairá sem anonimização.")
+    print("Guardião ativo. Nomes reais protegidos por códigos genéricos.")
     print("=" * 70)
-
-    # --- Pasta: processa múltiplos arquivos ---
-    if input_path.is_dir():
-        # H-10: Security check na pasta inteira
-        if not _security_check(input_path / "_dummy"):
-            sys.exit(1)
-        results = _process_folder(
-            input_path,
-            sample=args.sample,
-            pages=args.pages,
-            paragraphs=args.paragraphs,
-            slides=args.slides,
-        )
-        if results:
-            log_path = _save_operation_log(results, input_path)
-            _print_summary(results)
-            print(f"\n  Log da operação: {log_path}")
-        n_err = sum(1 for r in results if r.get("status") == "erro")
-        sys.exit(1 if n_err else 0)
+    print(f"  Processando: {doc_display}")
 
     # --- Arquivo único ---
     if not _security_check(input_path):
@@ -376,7 +477,7 @@ Exemplos:
     if result:
         anon_path, map_path = result
         _print_summary([{
-            "arquivo": input_path.name,
+            "arquivo": doc_display,
             "status": "ok",
             "anonimizado": str(anon_path),
             "mapa": str(map_path),

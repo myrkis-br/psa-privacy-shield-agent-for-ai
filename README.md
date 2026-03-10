@@ -45,17 +45,33 @@ Seu documento → [PSA: Anonimiza] → IA na nuvem → [PSA: Reverte] → Result
 
 ---
 
-## 🚀 Como funciona
+## 🚀 Como funciona — Os 19 Passos
 
-### Fluxo de proteção
+**15 de 19 passos rodam 100% local. Seus dados reais jamais saem do seu computador.**
 
-```
-1. INTERCEPTAÇÃO   → Captura o documento antes do envio
-2. ANONIMIZAÇÃO    → Substitui PII por tokens seguros
-3. VALIDAÇÃO       → Bloqueia se detectar dado residual
-4. EXECUÇÃO        → Envia dado limpo à IA
-5. REVERSÃO        → Restaura dados originais localmente
-```
+**Nem o nome do seu arquivo sai do computador. Seus dados começam protegidos do primeiro ao último passo.**
+
+| Passo | O que acontece | Local ou Nuvem | Consome Token? | Dados saem do computador? |
+|---|---|---|---|---|
+| 1 | Usuário entrega o arquivo ao PSA | 💻 Local | ❌ Não | ❌ Não — nome protegido por código genérico (DOC_001) via file_registry |
+| 2 | PSA invoca o psa.py via código genérico | 💻 Local | ❌ Não | ❌ Não |
+| 3 | Valida segurança do arquivo | 💻 Local | ❌ Não | ❌ Não |
+| 4 | Detecta extensão e escolhe script correto | 💻 Local | ❌ Não | ❌ Não |
+| 5 | Lê o arquivo real do disco | 💻 Local | ❌ Não | ❌ Não |
+| 6 | Faz amostragem (padrão: 100 linhas) | 💻 Local | ❌ Não | ❌ Não |
+| 7 | Detecta colunas sensíveis (70+ keywords) | 💻 Local | ❌ Não | ❌ Não |
+| 8 | Renomeia colunas para COL_A, COL_B... | 💻 Local | ❌ Não | ❌ Não |
+| 9 | Anonimiza valores com Faker pt_BR offline | 💻 Local | ❌ Não | ❌ Não |
+| 10 | Varia valores financeiros em ±15% | 💻 Local | ❌ Não | ❌ Não |
+| 11 | Escaneia textos livres e substitui via regex | 💻 Local | ❌ Não | ❌ Não |
+| 12 | Validação anti-vazamento — detectou dado real? Deleta tudo automaticamente | 💻 Local | ❌ Não | ❌ Não |
+| 13 | Salva arquivo anonimizado em data/anonymized/ | 💻 Local | ❌ Não | ❌ Não |
+| 14 | Salva mapa de correspondência em data/maps/ | 💻 Local | ❌ Não | ❌ Não |
+| 15 | Salva log da operação em logs/ | 💻 Local | ❌ Não | ❌ Não |
+| 16 | Claude/IA lê o arquivo anonimizado | ☁️ Nuvem | ✅ Sim | ✅ Sim — só dados fictícios |
+| 17 | Claude/IA realiza análise e responde | ☁️ Nuvem | ✅ Sim | ✅ Sim — só resultados fictícios |
+| 18 | Claude/IA gera script Python para rodar localmente | ☁️ Nuvem | ✅ Sim | ✅ Sim — só o código, sem dados |
+| 19 | Script roda nos dados reais localmente → results/ | 💻 Local | ❌ Não | ❌ Não |
 
 ### Exemplo real
 
