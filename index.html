@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PSA — Privacy Shield Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #07080d;
+    --bg2: #0d0f1a;
+    --accent: #00e5ff;
+    --accent3: #00ff9d;
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --border: rgba(0,229,255,0.12);
+    --border2: rgba(255,255,255,0.07);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.2rem 3rem;
+    background: rgba(7,8,13,0.9);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border2);
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.2rem;
+    letter-spacing: 0.04em;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+  }
+  .logo-shield {
+    width: 26px; height: 26px;
+    border: 2px solid var(--accent);
+    border-radius: 4px 4px 8px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 10px rgba(0,229,255,0.25);
+  }
+  .logo-shield::after {
+    content: '';
+    width: 7px; height: 7px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 6px var(--accent);
+  }
+  .logo span { color: var(--accent); }
+  .lang-selector {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.3rem 0.5rem;
+  }
+  .lang-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+  .lang-btn:hover { color: var(--text); }
+  .lang-btn.active { background: var(--accent); color: #07080d; font-weight: 700; }
+  .hero {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10rem 2rem 6rem;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+  .hero-orb {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(0,229,255,0.05) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: pulse 7s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:0.5;transform:translate(-50%,-50%) scale(1)} 50%{opacity:1;transform:translate(-50%,-50%) scale(1.08)} }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(0,229,255,0.07);
+    border: 1px solid rgba(0,229,255,0.18);
+    border-radius: 999px;
+    padding: 0.3rem 1rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+    animation: fadeUp 0.7s ease both;
+  }
+  .badge-dot {
+    width: 5px; height: 5px;
+    background: var(--accent3);
+    border-radius: 50%;
+    box-shadow: 0 0 5px var(--accent3);
+    animation: blink 2s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(2.5rem, 6vw, 5rem);
+    line-height: 1.08;
+    letter-spacing: -0.025em;
+    margin-bottom: 1.5rem;
+    animation: fadeUp 0.7s 0.1s ease both;
+    max-width: 800px;
+  }
+  h1 em { font-style: normal; color: var(--accent); text-shadow: 0 0 40px rgba(0,229,255,0.35); }
+  .hero-desc {
+    font-size: 1.1rem;
+    color: var(--muted);
+    max-width: 520px;
+    line-height: 1.8;
+    margin-bottom: 3rem;
+    animation: fadeUp 0.7s 0.2s ease both;
+  }
+  .waitlist {
+    animation: fadeUp 0.7s 0.3s ease both;
+    width: 100%;
+    max-width: 440px;
+    margin-bottom: 1.5rem;
+  }
+  .waitlist-form {
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--bg2);
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+  .waitlist-form:focus-within {
+    border-color: rgba(0,229,255,0.35);
+    box-shadow: 0 0 24px rgba(0,229,255,0.1);
+  }
+  .waitlist-input {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    padding: 0.9rem 1.2rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    color: var(--text);
+    min-width: 0;
+  }
+  .waitlist-input::placeholder { color: var(--muted); }
+  .waitlist-btn {
+    background: var(--accent);
+    color: #07080d;
+    border: none;
+    padding: 0.9rem 1.4rem;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.82rem;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+    text-transform: uppercase;
+  }
+  .waitlist-btn:hover { background: #33eaff; }
+  .waitlist-success {
+    display: none;
+    align-items: center;
+    gap: 0.6rem;
+    background: rgba(0,255,157,0.08);
+    border: 1px solid rgba(0,255,157,0.2);
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    font-size: 0.9rem;
+    color: var(--accent3);
+    font-family: 'DM Mono', monospace;
+    justify-content: center;
+  }
+  .waitlist-success.visible { display: flex; }
+  .waitlist-note {
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-align: center;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.03em;
+    margin-top: 0.6rem;
+  }
+  .github-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--muted);
+    text-decoration: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    transition: all 0.2s;
+    animation: fadeUp 0.7s 0.4s ease both;
+    margin-top: 0.8rem;
+  }
+  .github-link:hover { color: var(--text); border-color: var(--border); }
+  .github-link svg { width: 16px; height: 16px; fill: currentColor; }
+  .pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    justify-content: center;
+    margin-top: 3.5rem;
+    animation: fadeUp 0.7s 0.5s ease both;
+  }
+  .pill {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 999px;
+    padding: 0.4rem 1rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+  .pill strong { color: var(--accent); font-weight: 500; }
+  footer {
+    position: relative;
+    z-index: 1;
+    padding: 1.5rem 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--border2);
+    flex-wrap: wrap;
+    gap: 0.8rem;
+  }
+  .footer-copy { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--muted); }
+  .footer-author { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--muted); }
+  .footer-author span { color: var(--accent); }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  [data-lang] { display: none; }
+  [data-lang].active { display: block; }
+  span[data-lang].active { display: inline; }
+  @media (max-width: 600px) {
+    nav { padding: 1rem 1.2rem; }
+    .lang-btn { padding: 0.15rem 0.35rem; font-size: 0.62rem; }
+    footer { padding: 1.2rem; flex-direction: column; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="#">
+    <div class="logo-shield"></div>
+    PSA <span>Shield</span>
+  </a>
+  <div class="lang-selector">
+    <button class="lang-btn active" onclick="setLang('pt')">PT</button>
+    <button class="lang-btn" onclick="setLang('en')">EN</button>
+    <button class="lang-btn" onclick="setLang('es')">ES</button>
+    <button class="lang-btn" onclick="setLang('zh')">中文</button>
+    <button class="lang-btn" onclick="setLang('hi')">HI</button>
+    <button class="lang-btn" onclick="setLang('fr')">FR</button>
+  </div>
+</nav>
+
+<main class="hero">
+  <div class="hero-orb"></div>
+
+  <div class="badge">
+    <span class="badge-dot"></span>
+    <span data-lang="pt" class="active">Em desenvolvimento ativo</span>
+    <span data-lang="en">Actively in development</span>
+    <span data-lang="es">En desarrollo activo</span>
+    <span data-lang="zh">积极开发中</span>
+    <span data-lang="hi">सक्रिय विकास में</span>
+    <span data-lang="fr">En développement actif</span>
+  </div>
+
+  <h1>
+    <span data-lang="pt" class="active">Use IA com <em>privacidade total</em> dos seus dados</span>
+    <span data-lang="en">Use AI with <em>complete privacy</em> of your data</span>
+    <span data-lang="es">Usa IA con <em>privacidad total</em> de tus datos</span>
+    <span data-lang="zh">使用 AI，<em>完全保护</em>您的数据隐私</span>
+    <span data-lang="hi">AI का उपयोग करें, अपने डेटा की <em>पूर्ण गोपनीयता</em> के साथ</span>
+    <span data-lang="fr">Utilisez l'IA avec une <em>confidentialité totale</em> de vos données</span>
+  </h1>
+
+  <p class="hero-desc">
+    <span data-lang="pt" class="active">O PSA Shield é uma camada de proteção que anonimiza dados sensíveis <strong style="color:var(--text);font-weight:500">antes</strong> de enviá-los à nuvem. CPFs, nomes, e-mails e 70+ padrões protegidos — invisíveis para qualquer IA.</span>
+    <span data-lang="en">PSA Shield is a protection layer that anonymizes sensitive data <strong style="color:var(--text);font-weight:500">before</strong> sending it to the cloud. Tax IDs, names, emails and 70+ patterns protected — invisible to any AI.</span>
+    <span data-lang="es">PSA Shield es una capa de protección que anonimiza datos sensibles <strong style="color:var(--text);font-weight:500">antes</strong> de enviarlos a la nube. DNIs, nombres, correos y 70+ patrones protegidos — invisibles para cualquier IA.</span>
+    <span data-lang="zh">PSA Shield 是一个保护层，在将敏感数据发送到云端<strong style="color:var(--text);font-weight:500">之前</strong>对其进行匿名处理。税务号、姓名、电子邮件和 70+ 模式受到保护——对任何 AI 不可见。</span>
+    <span data-lang="hi">PSA Shield एक सुरक्षा परत है जो संवेदनशील डेटा को क्लाउड पर भेजने से <strong style="color:var(--text);font-weight:500">पहले</strong> अनामीकृत करती है। टैक्स ID, नाम, ईमेल और 70+ पैटर्न सुरक्षित — किसी भी AI के लिए अदृश्य।</span>
+    <span data-lang="fr">PSA Shield est une couche de protection qui anonymise les données sensibles <strong style="color:var(--text);font-weight:500">avant</strong> de les envoyer dans le cloud. N° fiscaux, noms, e-mails et 70+ modèles protégés — invisibles pour toute IA.</span>
+  </p>
+
+  <div class="waitlist">
+    <div class="waitlist-form" id="formWrap">
+      <input class="waitlist-input" type="email" id="emailInput" placeholder="seu@email.com" />
+      <button class="waitlist-btn" onclick="submitWaitlist()">
+        <span data-lang="pt" class="active">Entrar na lista</span>
+        <span data-lang="en">Join waitlist</span>
+        <span data-lang="es">Unirse a la lista</span>
+        <span data-lang="zh">加入等待列表</span>
+        <span data-lang="hi">सूची में शामिल हों</span>
+        <span data-lang="fr">Rejoindre la liste</span>
+      </button>
+    </div>
+    <div class="waitlist-success" id="successMsg">
+      <span>✓</span>
+      <span data-lang="pt" class="active">Recebido! Te avisamos quando lançar.</span>
+      <span data-lang="en">Got it! We'll notify you at launch.</span>
+      <span data-lang="es">¡Recibido! Te avisamos en el lanzamiento.</span>
+      <span data-lang="zh">已收到！发布时我们会通知您。</span>
+      <span data-lang="hi">प्राप्त! लॉन्च पर सूचित करेंगे।</span>
+      <span data-lang="fr">Reçu ! Nous vous informerons au lancement.</span>
+    </div>
+    <p class="waitlist-note">
+      <span data-lang="pt" class="active">Sem spam. Apenas novidades do PSA.</span>
+      <span data-lang="en">No spam. PSA updates only.</span>
+      <span data-lang="es">Sin spam. Solo novedades del PSA.</span>
+      <span data-lang="zh">无垃圾邮件。仅 PSA 更新。</span>
+      <span data-lang="hi">कोई स्पैम नहीं। केवल PSA अपडेट।</span>
+      <span data-lang="fr">Pas de spam. Nouveautés PSA uniquement.</span>
+    </p>
+  </div>
+
+  <a class="github-link" href="https://github.com/myrkis-br/psa-privacy-shield-agent-for-claude" target="_blank">
+    <svg viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+    <span data-lang="pt" class="active">Ver código no GitHub</span>
+    <span data-lang="en">View code on GitHub</span>
+    <span data-lang="es">Ver código en GitHub</span>
+    <span data-lang="zh">在 GitHub 查看代码</span>
+    <span data-lang="hi">GitHub पर कोड देखें</span>
+    <span data-lang="fr">Voir le code sur GitHub</span>
+  </a>
+
+  <div class="pills">
+    <span class="pill"><strong>100/100</strong> <span data-lang="pt" class="active">auditoria</span><span data-lang="en">audit</span><span data-lang="es">auditoría</span><span data-lang="zh">审计</span><span data-lang="hi">ऑडिट</span><span data-lang="fr">audit</span></span>
+    <span class="pill"><strong>70+</strong> PII <span data-lang="pt" class="active">padrões</span><span data-lang="en">patterns</span><span data-lang="es">patrones</span><span data-lang="zh">模式</span><span data-lang="hi">पैटर्न</span><span data-lang="fr">modèles</span></span>
+    <span class="pill"><strong>0</strong> <span data-lang="pt" class="active">vazamentos</span><span data-lang="en">leaks</span><span data-lang="es">filtraciones</span><span data-lang="zh">泄露</span><span data-lang="hi">लीक</span><span data-lang="fr">fuites</span></span>
+    <span class="pill"><strong>11</strong> <span data-lang="pt" class="active">formatos</span><span data-lang="en">formats</span><span data-lang="es">formatos</span><span data-lang="zh">格式</span><span data-lang="hi">प्रारूप</span><span data-lang="fr">formats</span></span>
+    <span class="pill">LGPD / GDPR</span>
+    <span class="pill">Python · Open Source</span>
+  </div>
+</main>
+
+<footer>
+  <div class="footer-copy">© 2026 PSA Shield</div>
+  <div class="footer-author">
+    <span data-lang="pt" class="active">por <span>Marcos Cruz</span> — Brasília/DF</span>
+    <span data-lang="en">by <span>Marcos Cruz</span> — Brasília/DF</span>
+    <span data-lang="es">por <span>Marcos Cruz</span> — Brasília/DF</span>
+    <span data-lang="zh">作者 <span>Marcos Cruz</span> — Brasília/DF</span>
+    <span data-lang="hi"><span>Marcos Cruz</span> द्वारा — Brasília/DF</span>
+    <span data-lang="fr">par <span>Marcos Cruz</span> — Brasília/DF</span>
+  </div>
+</footer>
+
+<script>
+const LANGS = ['pt','en','es','zh','hi','fr'];
+const PLACEHOLDERS = { pt:'seu@email.com', en:'your@email.com', es:'tu@email.com', zh:'您的@邮箱.com', hi:'आपका@ईमेल.com', fr:'votre@email.com' };
+
+function setLang(lang) {
+  LANGS.forEach(l => {
+    document.querySelectorAll('[data-lang="'+l+'"]').forEach(el => el.classList.toggle('active', l === lang));
+  });
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    const map = {'PT':'pt','EN':'en','ES':'es','中文':'zh','HI':'hi','FR':'fr'};
+    btn.classList.toggle('active', map[btn.textContent.trim()] === lang);
+  });
+  document.getElementById('emailInput').placeholder = PLACEHOLDERS[lang] || 'email';
+  document.documentElement.lang = lang;
+}
+
+function submitWaitlist() {
+  const email = document.getElementById('emailInput').value.trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    const inp = document.getElementById('emailInput');
+    inp.style.outline = '1px solid #f87171';
+    setTimeout(() => inp.style.outline = '', 1500);
+    return;
+  }
+  document.getElementById('formWrap').style.display = 'none';
+  document.getElementById('successMsg').classList.add('visible');
+}
+
+document.getElementById('emailInput').addEventListener('keydown', e => { if(e.key==='Enter') submitWaitlist(); });
+</script>
+</body>
+</html>
