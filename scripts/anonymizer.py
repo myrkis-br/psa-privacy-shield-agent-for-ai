@@ -143,6 +143,8 @@ SENSITIVE_KEYWORDS: Dict[str, str] = {
     "cartao":        "card",
     "cartão":        "card",
     "pix":           "pix",
+    "chave_pix":     "pix",
+    "chavepix":      "pix",
     "nascimento":    "birthdate",
     "nasc":          "birthdate",
     "birthdate":     "birthdate",
@@ -156,6 +158,18 @@ SENSITIVE_KEYWORDS: Dict[str, str] = {
     "processo":      "process_number",
     "matricula":     "id_number",
     "matrícula":     "id_number",
+    "carteirinha":   "id_number",
+    "carteira":      "id_number",
+    "registro":      "id_number",
+    "inscricao":     "id_number",
+    "inscrição":     "id_number",
+    "gestor":        "name",
+    "responsavel":   "name",
+    "responsável":   "name",
+    "supervisor":    "name",
+    "coordenador":   "name",
+    "gerente":       "name",
+    "diretor":       "name",
     "placa":         "id_number",
     "chassi":        "id_number",
     "renavam":       "id_number",
@@ -169,21 +183,95 @@ SENSITIVE_KEYWORDS: Dict[str, str] = {
 # H-02: Keywords curtas que exigem match exato (não parcial)
 _SHORT_EXACT_KEYWORDS: Set[str] = {"rg", "uf", "tel", "cpf", "cep", "pis", "nis", "nit", "mae", "pai", "lat", "lng", "lon"}
 
+# ---------------------------------------------------------------------------
+# Correção 1: Whitelist de padrões de colunas não-sensíveis
+# Colunas governamentais/institucionais que NÃO devem ser anonimizadas.
+# Verificada ANTES das keywords sensíveis.
+# ---------------------------------------------------------------------------
+_NON_SENSITIVE_PREFIXES: List[str] = [
+    "cod_", "codigo_", "código_",
+    "descricao_", "descrição_",
+    "situacao_", "situação_",
+    "regime_", "jornada_",
+    "nivel_", "nível_",
+    "referencia_", "referência_",
+    "padrao_", "padrão_",
+    "sigla_", "tipo_", "classe_",
+    "diploma_", "documento_",
+    "opcao_", "opção_",
+    "data_ingresso", "data_nomeacao", "data_nomeação",
+    "data_diploma", "data_inicio", "data_início",
+    "data_termino", "data_término", "data_posse",
+    "data_publicacao", "data_publicação", "data_criacao",
+    "data_atualizacao", "data_cadastro", "data_registro",
+    "uf_",
+]
+
+_NON_SENSITIVE_EXACT: Set[str] = {
+    "ano", "mes", "mês", "dia", "semestre", "trimestre", "bimestre",
+    "id", "seq", "sequencia", "orgao", "órgão", "uorg",
+    "funcao", "função", "atividade",
+}
+
 
 def detect_sensitivity(col_name: str) -> Optional[str]:
-    """Retorna o tipo sensível detectado ou None se não for sensível."""
-    normalized = col_name.lower().strip()
+    """
+    Retorna o tipo sensível detectado, None se sem match, ou False se
+    explicitamente não-sensível (whitelist). False impede a heurística
+    de conteúdo de rodar para esta coluna.
+    """
+    normalized = str(col_name).lower().strip()
+    # Ignora colunas geradas pelo pandas (Unnamed: 0, Unnamed: 1, etc.)
+    if re.match(r'^unnamed\s*:\s*\d+$', normalized):
+        return False
+    # Ignora colunas que são apenas números (anos, períodos: 2001, 2024)
+    if re.match(r'^\d+$', normalized):
+        return False
+    # Ignora colunas de período trimestral (1Q23, 4Q25, etc.)
+    if re.match(r'^[1-4]q\d{2}$', normalized):
+        return False
+
+    # --- Correção 1: whitelist de padrões não-sensíveis (antes das keywords) ---
+    # Retorna False (não None) para bloquear também a heurística de conteúdo
+    for prefix in _NON_SENSITIVE_PREFIXES:
+        if normalized.startswith(prefix):
+            return False
+    # Match exato por palavras (separadas por _ ou -)
+    col_words = set(re.split(r'[-_\s]+', normalized))
+    if col_words & _NON_SENSITIVE_EXACT:
+        # Exceção: se a coluna é exatamente um nome sensível conhecido,
+        # a keyword sensível prevalece (ex: "nome" está em SENSITIVE_KEYWORDS)
+        clean = normalized.replace("-", "").replace("_", "").replace(" ", "")
+        for keyword in SENSITIVE_KEYWORDS:
+            kw = keyword.replace("-", "").replace("_", "").replace(" ", "")
+            if kw == clean:
+                break  # match exato com keyword sensível — não ignorar
+        else:
+            return False  # nenhum match exato com keyword sensível — é não-sensível
+
     clean = normalized.replace("-", "").replace("_", "").replace(" ", "")
     # Primeiro tenta match exato (prioridade)
     for keyword, kind in SENSITIVE_KEYWORDS.items():
         kw = keyword.replace("-", "").replace("_", "").replace(" ", "")
         if kw == clean:
             return kind
-    # Match parcial: keywords com 4+ chars
+    # --- Correção 3: match parcial com word boundary ---
+    # Usa as palavras do nome da coluna (separadas por _ - espaço)
+    # para evitar substrings falsos: "atividade" não casa com "idade",
+    # "nomeacao" não casa com "nome", "coordenador" não casa com "endereco"
+    col_words_clean = set(re.split(r'[-_\s]+', normalized))
     for keyword, kind in SENSITIVE_KEYWORDS.items():
-        kw = keyword.replace("-", "").replace("_", "").replace(" ", "")
-        if len(kw) >= 4 and kw in clean:
-            return kind
+        kw_clean = keyword.replace("-", "").replace("_", "").replace(" ", "")
+        if len(kw_clean) < 4:
+            continue  # keywords curtas tratadas separadamente abaixo
+        # Match: a keyword deve ser uma palavra inteira do nome da coluna,
+        # OU o nome limpo (sem separadores) deve ser exatamente a keyword
+        # Verifica se alguma palavra da coluna contém a keyword como palavra inteira
+        for word in col_words_clean:
+            if word == kw_clean:
+                return kind
+        # Fallback: keyword composta que coincide com junção de palavras adjacentes
+        # Ex: "chave_pix" → clean="chavepix", keyword "chavepix" → match exato (já coberto acima)
     # H-02: Keywords curtas — match por word boundary no nome original
     # Ex: "num_rg" → encontra "rg"; "cargo" → não encontra "rg"
     words = set(re.split(r'[-_\s]+', normalized))
@@ -254,15 +342,42 @@ def _fake_cnpj() -> str:
 def _anonymize_amount(value) -> str:
     """Mantém a ordem de grandeza mas troca o valor exato."""
     try:
-        clean = re.sub(r"[R$\s\.]", "", str(value)).replace(",", ".")
-        num = float(clean)
+        s = str(value).strip()
+        if s.lower() in ("nan", "none", ""):
+            return value
+        # Tenta parse direto (formato inglês: 1234.56)
+        try:
+            num = float(s)
+            if num != num:  # NaN check
+                return value
+        except ValueError:
+            # Formato brasileiro: R$ 1.234,56 ou 1.234.567,89
+            clean = re.sub(r"[R$\s]", "", s)
+            # Se tem vírgula como último separador decimal
+            if "," in clean:
+                clean = clean.replace(".", "").replace(",", ".")
+            num = float(clean)
         if num == 0:
             return "0"
-        variation = fake.random.uniform(0.85, 1.15)
-        new_val = num * variation
+        original_str = s
+        # Para valores muito pequenos, variação percentual não muda 2 casas decimais
+        # Usa offset aditivo em vez de multiplicativo
+        if abs(num) < 0.1:
+            offset = fake.random.uniform(0.01, 0.05)
+            new_val = num + (offset if num >= 0 else -offset)
+            return f"{new_val:.2f}"
+        # Garante que o resultado nunca seja igual ao original (evita C-01)
+        for _ in range(10):
+            variation = fake.random.uniform(0.85, 1.15)
+            new_val = num * variation
+            if f"{new_val:.2f}" != original_str:
+                return f"{new_val:.2f}"
+        # Fallback: offset aditivo
+        new_val = num + (abs(num) * 0.20)
         return f"{new_val:.2f}"
     except (ValueError, TypeError):
-        return str(value)
+        # Texto em coluna numérica → anonimiza como label genérico
+        return _cached(str(value), lambda: f"Item_{fake.random_number(digits=4)}")
 
 
 def _anonymize_coordinate(value) -> str:
@@ -304,6 +419,20 @@ def calculate_sample_size(n_rows: int) -> int:
         return 200
 
 
+def _fake_pix(real_value) -> str:
+    """Gera chave PIX fake do mesmo tipo da original (CPF, email, telefone ou aleatória)."""
+    v = str(real_value).strip()
+    # Detecta tipo pela estrutura
+    if re.match(r'^\d{3}\.\d{3}\.\d{3}-\d{2}$', v):
+        return _fake_cpf()
+    if "@" in v:
+        return fake.email()
+    if re.match(r'^[\(\+\d][\d\s\(\)\-\+]+$', v) and len(re.sub(r'\D', '', v)) >= 10:
+        return fake.phone_number()
+    # Chave aleatória (EVP)
+    return fake.uuid4()
+
+
 GENERATORS: Dict[str, object] = {
     "name":           lambda v: _cached(v, fake.name),
     "company":        lambda v: _cached(v, fake.company),
@@ -325,12 +454,12 @@ GENERATORS: Dict[str, object] = {
     "token":          lambda v: _cached(v, lambda: fake.sha256()),
     "key":            lambda v: _cached(v, lambda: fake.sha1()),
     "process_number": lambda v: _cached(v, lambda: f"{fake.random_number(7)}-{fake.random_number(2)}.{fake.random_number(4)}.{fake.random_int(1,9)}.{fake.random_int(1000,9999)}.{fake.random_number(4)}"),
-    "id_number":      lambda v: _cached(v, lambda: str(fake.random_number(digits=8))),
+    "id_number":      lambda v: _cached(v, lambda: str(fake.random_number(digits=max(len(re.sub(r'\D', '', str(v))), 6)))),
     "account":        lambda v: _cached(v, lambda: str(fake.random_number(digits=6))),
     "agency":         lambda v: _cached(v, lambda: str(fake.random_number(digits=4))),
-    "bank":           lambda v: _cached(v, fake.bank),
+    "bank":           lambda v: _cached(v, lambda: f"Banco {fake.last_name()} ({fake.random_number(digits=3):03d})"),
     "card":           lambda v: _cached(v, lambda: fake.credit_card_number()),
-    "pix":            lambda v: _cached(v, fake.email),
+    "pix":            lambda v: _cached(v, lambda: _fake_pix(v)),
     "salary":         _anonymize_amount,
     "amount":         _anonymize_amount,
     "coordinate":     _anonymize_coordinate,
@@ -370,6 +499,174 @@ def _anonymize_cell(value, kind: str) -> str:
 class LeakageError(Exception):
     """Exceção levantada quando dados reais vazam para o arquivo anonimizado."""
     pass
+
+
+# ---------------------------------------------------------------------------
+# Leitura inteligente de XLSX (multi-aba + detecção de header)
+# ---------------------------------------------------------------------------
+
+def _read_best_sheet(path: Path) -> pd.DataFrame:
+    """
+    Lê o XLSX escolhendo a aba com mais dados e detectando a linha de header.
+    Resolve o problema de planilhas financeiras com abas vazias e headers
+    que não estão na primeira linha.
+    """
+    xls = pd.ExcelFile(path)
+    best_df = None
+    best_score = -1
+    best_sheet = None
+
+    for sheet_name in xls.sheet_names:
+        # Lê sem header para inspecionar todas as linhas como dados
+        raw = pd.read_excel(xls, sheet_name=sheet_name, header=None, dtype=str)
+        if raw.empty:
+            continue
+
+        # Score = linhas não-vazias * colunas não-vazias
+        non_null_rows = raw.dropna(how="all").shape[0]
+        non_null_cols = raw.dropna(axis=1, how="all").shape[1]
+        score = non_null_rows * non_null_cols
+
+        if score > best_score:
+            best_score = score
+            best_sheet = sheet_name
+
+    if best_sheet is None:
+        raise ValueError("Nenhuma aba com dados encontrada no arquivo XLSX.")
+
+    log.info(f"Aba selecionada: '{best_sheet}' (score={best_score})")
+
+    # Agora lê a melhor aba e detecta a linha de header
+    raw = pd.read_excel(xls, sheet_name=best_sheet, header=None, dtype=str)
+
+    # Encontra a primeira linha com >= 50% de células preenchidas
+    header_row = 0
+    for i in range(min(10, len(raw))):
+        row_values = raw.iloc[i]
+        filled = row_values.notna().sum()
+        total = len(row_values)
+        if total > 0 and filled / total >= 0.5:
+            header_row = i
+            break
+
+    # Relê com o header correto
+    df = pd.read_excel(xls, sheet_name=best_sheet, header=header_row, dtype=str)
+
+    # Remove colunas completamente vazias
+    df = df.dropna(axis=1, how="all")
+    # Remove linhas completamente vazias
+    df = df.dropna(how="all").reset_index(drop=True)
+
+    log.info(
+        f"Header detectado na linha {header_row} | "
+        f"{len(df)} linhas x {len(df.columns)} colunas"
+    )
+
+    # Verifica se há excesso de colunas "Unnamed:" (header errado)
+    unnamed_count = sum(1 for c in df.columns if str(c).lower().startswith("unnamed"))
+    total_cols = len(df.columns)
+    if total_cols > 0 and unnamed_count / total_cols > 0.5:
+        log.warning(
+            f"⚠ {unnamed_count}/{total_cols} colunas sem nome — "
+            f"possível header mal detectado"
+        )
+
+    return df
+
+
+def detect_column_type(series: pd.Series) -> str:
+    """
+    Analisa o conteúdo de uma coluna para determinar seu tipo real.
+
+    Returns:
+        "id_number"      - IDs numéricos únicos (sem decimais, alta cardinalidade)
+        "amount"         - valores financeiros (decimais, muitos zeros, baixa cardinalidade relativa)
+        "financial_text" - texto com indicadores financeiros (R$, %, milhões)
+        "date"           - datas ou períodos (1Q23, 4Q25, 2024, etc.)
+        "name"           - nomes próprios (Mixed Case, alta cardinalidade)
+        "enum"           - categorias/enums (poucos valores únicos, texto repetitivo)
+        "mixed"          - mistura de tipos
+        "empty"          - coluna vazia ou quase vazia
+    """
+    sample = series.dropna().head(100)
+    if len(sample) < 2:
+        return "empty"
+
+    n = len(sample)
+    numeric_count = 0
+    has_decimal = 0
+    zero_count = 0
+    financial_text_count = 0
+    date_count = 0
+    name_count = 0
+
+    for val in sample.astype(str):
+        val_clean = val.strip()
+        if not val_clean:
+            continue
+
+        # Numérico: inteiros, decimais, negativos, notação científica
+        if re.match(r'^-?[\d.,]+(?:[eE][+-]?\d+)?$', val_clean.replace(" ", "")):
+            numeric_count += 1
+            # Correção 4: rastrear decimais e zeros para separar id_number de amount
+            normalized_num = val_clean.replace(".", "").replace(",", ".")
+            if "," in val_clean or (val_clean.count(".") > 0 and not val_clean.replace(".", "").replace("-", "").isdigit()):
+                has_decimal += 1
+            try:
+                if float(normalized_num) == 0:
+                    zero_count += 1
+            except ValueError:
+                pass
+            continue
+
+        # Financeiro em texto: R$, US$, %, milhões, bilhões
+        if re.search(r'R\$|US\$|%|milh[õo]|bilh[õo]|thousand|million|billion', val_clean, re.IGNORECASE):
+            financial_text_count += 1
+            continue
+
+        # Período/data: 1Q23, 4Q25, 2024, Jan/2023, etc.
+        if re.match(r'^[1-4]Q\d{2}$', val_clean) or re.match(r'^\d{4}$', val_clean):
+            date_count += 1
+            continue
+
+        # Nome próprio: 2+ palavras capitalizadas
+        words = val_clean.split()
+        if len(words) >= 2 and all(w[0].isupper() for w in words if w.isalpha()):
+            name_count += 1
+            continue
+
+    # Classifica pelo tipo predominante
+    if n == 0:
+        return "empty"
+
+    # --- Correção 2: detectar enums/categorias ---
+    # Texto com poucos valores únicos (<10 ou <10% da amostra) = enum, não name
+    unique_values = series.dropna().head(100).nunique()
+    unique_ratio = unique_values / n if n > 0 else 1
+
+    if numeric_count / n >= 0.5:
+        # --- Correção 4: separar id_number de amount ---
+        # id_number: sem decimais, valores únicos altos, poucos zeros
+        # amount: tem decimais ou muitos zeros (ex: 0.00 em colunas financeiras)
+        is_integer_like = has_decimal < numeric_count * 0.1  # <10% tem decimal
+        has_many_zeros = zero_count > numeric_count * 0.3    # >30% são zero
+        is_high_cardinality = unique_values > n * 0.5         # >50% valores únicos
+
+        if is_integer_like and is_high_cardinality and not has_many_zeros:
+            return "id_number"
+        return "amount"
+    if financial_text_count / n >= 0.3:
+        return "financial_text"
+    if date_count / n >= 0.5:
+        return "date"
+    if name_count / n >= 0.5:
+        # Correção 2: se há poucos valores únicos, é enum/categoria, não nome
+        if unique_values < 10 or unique_ratio < 0.1:
+            return "enum"
+        return "name"
+    if (numeric_count + financial_text_count) / n >= 0.5:
+        return "amount"
+    return "mixed"
 
 
 # ---------------------------------------------------------------------------
@@ -421,7 +718,7 @@ def anonymize_spreadsheet(
         if df is None:
             raise ValueError("Não foi possível ler o CSV. Verifique encoding e separador.")
     elif suffix in (".xlsx", ".xls"):
-        df = pd.read_excel(input_path, dtype=str)
+        df = _read_best_sheet(input_path)
     else:
         raise ValueError(f"Formato não suportado: {suffix}. Use CSV ou XLSX.")
 
@@ -458,9 +755,26 @@ def anonymize_spreadsheet(
     col_types: Dict[str, Optional[str]] = {}
     for col in df_sample.columns:
         kind = detect_sensitivity(col)
+        source = "header"
+        # False = explicitamente não-sensível (whitelist) — não roda heurística
+        # None = sem match por header — tenta heurística de conteúdo
+        if kind is False:
+            kind = None  # normaliza para None no dict final
+        elif kind is None:
+            col_type = detect_column_type(df_sample[col])
+            source = "conteúdo"
+            if col_type == "id_number":
+                kind = "id_number"
+            elif col_type == "amount":
+                kind = "amount"
+            elif col_type == "name":
+                kind = "name"
+            elif col_type == "financial_text":
+                kind = "amount"
+            # "enum" e "mixed" ficam como None (não-sensível)
         col_types[col] = kind
         if kind:
-            log.info(f"  Coluna sensível detectada: '{col}' -> tipo '{kind}'")
+            log.info(f"  Coluna sensível ({source}): '{col}' -> tipo '{kind}'")
         else:
             log.info(f"  Coluna não-sensível: '{col}'")
 
@@ -572,13 +886,17 @@ def _validate_no_leakage(
         if kind is None:
             continue
         new_col = col_rename_map[original_col]
-        original_values = set(df_original[original_col].dropna().astype(str))
-        anon_values = set(df_anon[new_col].dropna().astype(str))
-        overlap = original_values & anon_values
-        # Ignora valores genéricos que podem coincidir por acaso
-        overlap = {v for v in overlap if len(v.strip()) > 3}
-        if overlap:
-            leaks.append((original_col, kind, list(overlap)[:5]))
+        # Comparação LINHA-A-LINHA: detecta se o mesmo índice manteve o valor
+        col_leaks = []
+        for idx in df_original.index:
+            if idx not in df_anon.index:
+                continue
+            orig_val = str(df_original.at[idx, original_col]) if pd.notna(df_original.at[idx, original_col]) else ""
+            anon_val = str(df_anon.at[idx, new_col]) if pd.notna(df_anon.at[idx, new_col]) else ""
+            if orig_val == anon_val and len(orig_val.strip()) > 3:
+                col_leaks.append(orig_val)
+        if col_leaks:
+            leaks.append((original_col, kind, col_leaks[:5]))
 
     if leaks:
         # C-01: BLOQUEIA — deleta arquivo se existir e levanta exceção
