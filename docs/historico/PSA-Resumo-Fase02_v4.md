@@ -1,8 +1,11 @@
 # PSA — Privacy Shield Agent for AI
 ## Resumo do Projeto — Fase 2 (atualizado 12/03/2026 — v4)
+### Status: Beta v1.0
 
 **Autor:** Marcos Cruz — Brasília/DF
 **Tagline:** Seu guarda-costas digital. Seu guardião de dados.
+
+> **Versao Beta** — Em desenvolvimento ativo. Use como camada adicional de protecao, nunca como unica garantia de conformidade. Nao substitui assessoria juridica especializada.
 
 ---
 

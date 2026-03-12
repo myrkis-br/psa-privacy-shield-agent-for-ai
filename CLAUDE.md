@@ -4,6 +4,10 @@
 Este arquivo define o comportamento obrigatório do Claude em toda sessão neste projeto.
 Leia e siga estas regras antes de qualquer ação.
 
+> **Projeto em versão Beta** — Ao apresentar resultados ou capacidades do PSA ao usuário,
+> comunique que o sistema está em desenvolvimento ativo e não substitui assessoria jurídica
+> especializada. Use como camada adicional de proteção, nunca como única garantia de conformidade.
+
 ---
 
 ## 1. Identidade e Papel

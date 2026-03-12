@@ -4,6 +4,7 @@
 
 **Seus dados nunca saem. A IA trabalha no escuro.**
 
+[![Beta](https://img.shields.io/badge/Status-Beta-orange?style=for-the-badge)](https://github.com/myrkis-br/psa-privacy-shield-agent-for-ai)
 [![Security Score](https://img.shields.io/badge/Security%20Score-82%2F100-00e5ff?style=for-the-badge&logo=shield&logoColor=white)](https://github.com/myrkis-br/psa-privacy-shield-agent-for-ai)
 [![Formats](https://img.shields.io/badge/Formats-21%20extensions-ff6b35?style=for-the-badge&logo=files&logoColor=white)](https://github.com/myrkis-br/psa-privacy-shield-agent-for-ai)
 [![Version](https://img.shields.io/badge/Version-v6.1-00ff9d?style=for-the-badge)](https://github.com/myrkis-br/psa-privacy-shield-agent-for-ai/releases)
@@ -19,6 +20,13 @@
 [Site](https://myrkis-br.github.io/psa-privacy-shield-agent-for-ai) · [Release](https://github.com/myrkis-br/psa-privacy-shield-agent-for-ai/releases) · [Lista de Espera](https://myrkis-br.github.io/psa-privacy-shield-agent-for-ai)
 
 </div>
+
+---
+
+> **Versao Beta — Em desenvolvimento ativo.**
+> Use como camada adicional de protecao, nunca como unica garantia de conformidade com a LGPD.
+> Nao nos responsabilizamos por eventuais erros ou falhas de deteccao.
+> O PSA nao substitui assessoria juridica especializada.
 
 ---
 
