@@ -343,7 +343,12 @@ def anonymize_email(input_path: Path) -> Tuple[Path, Path]:
     if suffix == ".eml":
         data = _extract_eml(input_path)
     elif suffix == ".msg":
-        data = _extract_msg(input_path)
+        try:
+            data = _extract_msg(input_path)
+        except Exception as e:
+            # Fallback: .msg pode ser MIME salvo com extensão .msg
+            log.warning(f"extract-msg falhou ({e}), tentando como MIME...")
+            data = _extract_eml(input_path)
     else:
         raise ValueError(f"Formato não suportado: {suffix}. Use .eml ou .msg")
 

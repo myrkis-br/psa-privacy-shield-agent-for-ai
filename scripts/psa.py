@@ -68,6 +68,8 @@ SUPPORTED = {
     # Documentos
     ".docx": ("document",    "Word"),
     ".txt":  ("document",    "Texto"),
+    ".rtf":  ("rtf",         "RTF"),
+    ".odt":  ("odt",         "ODT (LibreOffice)"),
     # PDF
     ".pdf":  ("pdf",         "PDF"),
     # Apresentações
@@ -171,6 +173,14 @@ def _anonymize(
         elif kind == "presentation":
             from anonymize_presentation import anonymize_presentation
             return anonymize_presentation(input_path, max_slides=slides)
+
+        elif kind == "rtf":
+            from anonymize_rtf import anonymize_rtf
+            return anonymize_rtf(input_path, sample_paragraphs=paragraphs)
+
+        elif kind == "odt":
+            from anonymize_odt import anonymize_odt
+            return anonymize_odt(input_path, sample_paragraphs=paragraphs)
 
         elif kind == "email":
             from anonymize_email import anonymize_email

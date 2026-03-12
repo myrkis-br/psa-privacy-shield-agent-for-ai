@@ -119,6 +119,8 @@ _EXT_MAP = {
     ".xls":  ("planilha", "Excel legado"),
     ".docx": ("documento", "Word"),
     ".txt":  ("documento", "Texto"),
+    ".rtf":  ("documento", "RTF"),
+    ".odt":  ("documento", "ODT"),
     ".pdf":  ("documento", "PDF"),
     ".pptx": ("apresentacao", "PowerPoint"),
     ".eml":  ("email", "EML"),
@@ -565,7 +567,7 @@ def _extract_text_sample(filepath: Path, max_chars: int = 10000) -> str:
         except Exception:
             return ""
 
-    elif suffix in (".txt", ".docx"):
+    elif suffix in (".txt", ".docx", ".rtf", ".odt"):
         try:
             if suffix == ".txt":
                 for enc in ("utf-8", "latin-1", "cp1252"):
@@ -579,6 +581,36 @@ def _extract_text_sample(filepath: Path, max_chars: int = 10000) -> str:
                 doc = Document(str(filepath))
                 text = "\n".join(p.text for p in doc.paragraphs[:50])
                 return text[:max_chars]
+            elif suffix == ".rtf":
+                from striprtf.striprtf import rtf_to_text
+                for enc in ("utf-8", "latin-1", "cp1252"):
+                    try:
+                        raw = filepath.read_text(encoding=enc)
+                        return rtf_to_text(raw)[:max_chars]
+                    except (UnicodeDecodeError, UnicodeError):
+                        continue
+            elif suffix == ".odt":
+                from odf.opendocument import load as odf_load
+                doc = odf_load(str(filepath))
+                parts = []
+                for elem in doc.text.childNodes:
+                    if hasattr(elem, 'qname'):
+                        tag = elem.qname[1] if isinstance(elem.qname, tuple) else str(elem.qname)
+                        if tag in ('p', 'h'):
+                            # Extract text recursively
+                            def _get_text(el):
+                                result = []
+                                if hasattr(el, 'childNodes'):
+                                    for ch in el.childNodes:
+                                        if hasattr(ch, 'data'):
+                                            result.append(ch.data)
+                                        else:
+                                            result.append(_get_text(ch))
+                                return ''.join(result)
+                            text = _get_text(elem).strip()
+                            if text:
+                                parts.append(text)
+                return "\n".join(parts)[:max_chars]
         except Exception:
             return ""
 
