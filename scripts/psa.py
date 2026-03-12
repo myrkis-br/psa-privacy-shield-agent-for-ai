@@ -30,6 +30,7 @@ Uso:
 import os
 import sys
 import json
+import hashlib
 import argparse
 import logging
 from pathlib import Path
@@ -311,6 +312,103 @@ def _save_operation_log(results: List[dict], input_label: str):
     with open(log_path, "w", encoding="utf-8") as f:
         json.dump(log_data, f, ensure_ascii=False, indent=2)
     return log_path
+
+
+# ---------------------------------------------------------------------------
+# S-01: Hash de integridade (SHA256)
+# ---------------------------------------------------------------------------
+
+def _compute_sha256(file_path: Path) -> str:
+    """Calcula SHA256 de um arquivo."""
+    h = hashlib.sha256()
+    with open(file_path, "rb") as f:
+        for chunk in iter(lambda: f.read(8192), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _save_hash(anon_path: Path) -> str:
+    """Gera e salva SHA256 do arquivo anonimizado."""
+    sha = _compute_sha256(anon_path)
+    hash_path = Path(str(anon_path) + ".sha256")
+    hash_path.write_text(f"{sha}  {anon_path.name}\n", encoding="utf-8")
+    return sha
+
+
+# ---------------------------------------------------------------------------
+# S-02: Log de auditoria assinado (audit_trail.jsonl)
+# ---------------------------------------------------------------------------
+
+AUDIT_TRAIL_PATH = LOGS_DIR / "audit_trail.jsonl"
+
+
+def _append_audit_entry(
+    doc_code: str,
+    input_path: Path,
+    anon_path: Optional[Path],
+    map_path: Optional[Path],
+    hash_input: str,
+    hash_output: str,
+    entidades: int,
+    risk_score: int,
+    mode: Optional[str],
+    no_map: bool,
+) -> None:
+    """Append-only: grava entrada de auditoria em JSONL."""
+    entry = {
+        "doc_code": doc_code,
+        "timestamp": datetime.now().isoformat(),
+        "hash_input": hash_input,
+        "hash_output": hash_output,
+        "entidades": entidades,
+        "risk_score": risk_score,
+        "mode": mode or "auto",
+        "no_map": no_map,
+        "anon_file": anon_path.name if anon_path else None,
+        "operador": os.environ.get("USER", os.environ.get("USERNAME", "unknown")),
+    }
+    with open(AUDIT_TRAIL_PATH, "a", encoding="utf-8") as f:
+        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    log.info(f"Audit trail: {AUDIT_TRAIL_PATH}")
+
+
+# ---------------------------------------------------------------------------
+# S-03: Purge de mapas
+# ---------------------------------------------------------------------------
+
+def _cmd_purge_maps() -> None:
+    """Deleta todos os arquivos de mapa em data/maps/."""
+    maps_dir = BASE_DIR / "data" / "maps"
+    map_files = list(maps_dir.glob("map_*.json"))
+
+    if not map_files:
+        print("\n  Nenhum mapa encontrado em data/maps/")
+        sys.exit(0)
+
+    print(f"\n  {len(map_files)} mapa(s) encontrado(s) em data/maps/")
+    print("  ATENÇÃO: Esta ação é irreversível. Os mapas real→fake serão deletados.")
+
+    try:
+        resp = input("  Confirmar exclusão? [s/N]: ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        print("\n  Operação cancelada.")
+        sys.exit(0)
+
+    if resp not in ("s", "sim", "y", "yes"):
+        print("  Operação cancelada.")
+        sys.exit(0)
+
+    deleted = 0
+    for f in map_files:
+        try:
+            f.unlink()
+            deleted += 1
+        except Exception as e:
+            log.error(f"Erro ao deletar {f.name}: {e}")
+
+    print(f"  {deleted} mapa(s) deletado(s).")
+    log.info(f"PURGE_MAPS: {deleted} mapas deletados por {os.environ.get('USER', 'unknown')}")
+    sys.exit(0)
 
 
 def _print_summary(results: List[dict]):
@@ -684,7 +782,7 @@ def _run_enricher(
 
 def _run_ripd(
     doc_code: str,
-    input_path: Path,
+    doc_display: str,
     classification: Dict,
     anon_stats: Dict,
     enricher_result: Optional[Dict],
@@ -695,7 +793,7 @@ def _run_ripd(
         from ripd_report import generate_ripd
         return generate_ripd(
             doc_code=doc_code,
-            filepath=input_path.name,
+            filepath=doc_display,  # S-04: usa DOC_NNN, não nome real
             classification=classification,
             anon_stats=anon_stats,
             enricher_result=enricher_result,
@@ -963,10 +1061,21 @@ Exemplos:
         "--mode", choices=["eco", "standard", "max"],
         help="Modo de processamento: eco (30%%), standard (60%%), max (100%%)",
     )
+    parser.add_argument(
+        "--no-map", action="store_true",
+        help="Não salva mapa de correspondência real→fake (mais seguro)",
+    )
+    parser.add_argument(
+        "--purge-maps", action="store_true",
+        help="Deleta todos os mapas de correspondência em data/maps/",
+    )
 
     args = parser.parse_args()
 
     # --- Comandos do File Registry ---
+    if args.purge_maps:
+        _cmd_purge_maps()
+
     if args.list_files:
         _cmd_list_files()
 
@@ -1139,6 +1248,23 @@ Exemplos:
 
     anon_path, map_path = result
 
+    # === S-01: Hash de integridade ===
+    hash_input = _compute_sha256(input_path)
+    hash_output = _save_hash(anon_path)
+    log.info(f"SHA256 input:  {hash_input}")
+    log.info(f"SHA256 output: {hash_output}")
+
+    # === S-03: --no-map — deleta mapa se solicitado ===
+    if args.no_map and map_path and map_path.exists():
+        map_path.unlink()
+        log.info("Mapa de correspondência DELETADO (--no-map ativo)")
+        map_path = None
+    elif map_path and map_path.exists():
+        log.warning(
+            "AVISO: Mapa real→fake salvo em data/maps/. "
+            "Use --no-map para impedir ou --purge-maps para limpar."
+        )
+
     # === v6.0 PASSO 4: Coleta lacunas e enricher ===
     enricher_result = None
     if classification:
@@ -1160,17 +1286,32 @@ Exemplos:
     ripd_result = None
     if classification:
         ripd_result = _run_ripd(
-            doc_code, input_path, classification,
+            doc_code, doc_display, classification,
             anon_stats, enricher_result,
             mode=selected_mode,
         )
 
+    # === S-02: Audit trail ===
+    _append_audit_entry(
+        doc_code=doc_code,
+        input_path=input_path,
+        anon_path=anon_path,
+        map_path=map_path,
+        hash_input=hash_input,
+        hash_output=hash_output,
+        entidades=anon_stats.get("entidades_total", 0),
+        risk_score=risk_score,
+        mode=selected_mode,
+        no_map=args.no_map,
+    )
+
     # === Resumo final ===
+    map_display = str(map_path) if map_path else "[não salvo — --no-map]"
     _print_summary([{
         "arquivo": doc_display,
         "status": "ok",
         "anonimizado": str(anon_path),
-        "mapa": str(map_path),
+        "mapa": map_display,
     }])
 
     # Exibe RIPD
@@ -1178,6 +1319,9 @@ Exemplos:
         print()
         print(ripd_result["report_terminal"])
         print(f"\n  RIPD salvo em: {ripd_result['saved_path']}")
+
+    # Exibe hash de integridade
+    print(f"\n  SHA256: {hash_output}")
 
     sys.exit(0)
 
