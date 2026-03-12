@@ -1,0 +1,59 @@
+============================================================
+RELATÓRIO DE IMPACTO À PROTEÇÃO DE DADOS PESSOAIS (RIPD)
+PSA — Privacy Shield Agent v6.0
+Gerado em: 12/03/2026 18:50:53
+Base legal: Art. 38 LGPD + Resolução ANPD nº 4/2023
+============================================================
+
+1. IDENTIFICAÇÃO DO DOCUMENTO
+----------------------------------------
+   Código PSA:        DOC_033
+   Arquivo:           DOC_033.sql
+   Tipo:              database
+   Subtipo:           sql
+   Titulares estim.:  46 pessoas
+   Modo processo.:    MÁXIMO (100%)
+
+2. CLASSIFICAÇÃO DE RISCO
+----------------------------------------
+   Risk Score:        4/10
+   Classificação:     MÉDIA
+   Dado sensível:     SIM (Art. 11 LGPD)
+   Categorias:        menor, politico, cadastral
+   RIPD obrigatório:  NÃO
+   Cobertura:         anonimização completa + RIPD recomendado
+   Justificativa:     dado sensível Art. 11 (menor, politico): +3 | dado cadastral (CPF/RG/endereço): +1
+
+3. ECONOMIA E EFICIÊNCIA
+----------------------------------------
+   Tokens originais:  1.520
+   Tokens anonimiz.:  2.179
+   Economia:          -43.4%
+   Custo sem PSA:     R$ 0,08
+   Custo com PSA:     R$ 0,11
+   Economia por doc:  R$ 0,00
+
+4. SEGURANÇA DA ANONIMIZAÇÃO
+----------------------------------------
+   Entidades anon.:   0
+   Dados vazados:     0 ✓ SEGURO
+   Padrões novos:     0
+
+5. CONFORMIDADE LGPD
+----------------------------------------
+   Classificação:     MÉDIA
+   Status:            Conformidade LGPD garantida
+   Risco residual:    ZERO
+   Base legal:        Art. 52 LGPD + Res. ANPD nº 4/2023
+
+6. CONCLUSÃO
+----------------------------------------
+   Este documento apresenta RISCO MÉDIO à proteção de dados
+   pessoais. Recomenda-se anonimização completa e a
+   elaboração de RIPD como boa prática.
+
+============================================================
+PSA — Privacy Shield Agent v6.0
+Este relatório foi gerado automaticamente e não substitui
+a análise do encarregado de proteção de dados (DPO).
+============================================================

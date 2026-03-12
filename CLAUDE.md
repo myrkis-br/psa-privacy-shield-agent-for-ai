@@ -55,6 +55,19 @@ psa-project/
 │   ├── anonymize_pdf.py     PDF
 │   ├── anonymize_presentation.py  PPTX
 │   ├── anonymize_email.py   EML / MSG
+│   ├── anonymize_json.py    JSON (travessia recursiva)
+│   ├── anonymize_xml.py     XML / NF-e (namespaces SEFAZ)
+│   ├── anonymize_html.py    HTML (tags + texto)
+│   ├── anonymize_yaml.py    YAML / YML
+│   ├── anonymize_sql.py     SQL (dumps / scripts)
+│   ├── anonymize_log.py     LOG (linhas de log)
+│   ├── anonymize_vcf.py     VCF (vCard / contatos)
+│   ├── anonymize_parquet.py PARQUET (colunar)
+│   ├── anonymize_rtf.py     RTF (Rich Text Format)
+│   ├── anonymize_odt.py     ODT (OpenDocument Text)
+│   ├── classifier.py        Classificador de risco LGPD 1-10
+│   ├── pattern_enricher.py  Enriquecedor de padrões PII
+│   ├── ripd_report.py       Gerador de relatório RIPD (Art. 38 LGPD)
 │   └── text_engine.py       Motor de regex compartilhado
 ├── logs/                    ⛔ PROTEGIDO — pode conter PII residual
 ├── results/                 ✅ Resultados de análises (gerados pelos agentes)
@@ -185,13 +198,29 @@ python3 scripts/psa.py DOC_004 --slides 10          # apresentação: 10 slides
 python3 scripts/psa.py data/real/
 ```
 
-### Formatos suportados
+### Comandos de segurança
+```bash
+python3 scripts/psa.py DOC_001 --no-map        # anonimiza SEM salvar mapa de correspondência
+python3 scripts/psa.py --purge-maps             # deleta TODOS os mapas em data/maps/
+```
+
+### Formatos suportados (21 extensões / 18 formatos)
 ```
 .csv .xlsx .xls   → Planilhas (amostra de linhas + text_engine em texto livre)
 .docx .txt        → Documentos (amostra de parágrafos, com headers/footers)
 .pdf              → PDFs (amostra de páginas, padrão 10)
 .pptx             → Apresentações (amostra de slides)
 .eml .msg         → Emails (campo a campo, aviso sobre anexos)
+.json             → JSON (travessia recursiva de objetos/arrays)
+.xml              → XML / NF-e (namespaces SEFAZ, tags sensíveis)
+.html             → HTML (tags + texto livre)
+.yaml .yml        → YAML (chaves sensíveis + texto)
+.sql              → SQL (dumps, inserts, creates)
+.log              → LOG (linhas de log com PII)
+.vcf              → vCard (contatos)
+.parquet          → Parquet (colunar, via pandas)
+.rtf              → RTF (Rich Text Format)
+.odt              → ODT (OpenDocument Text)
 ```
 
 ---
@@ -281,6 +310,13 @@ Execute mentalmente antes de qualquer ação com dados:
 - CSV: auto-detecta encoding (utf-8, latin-1, cp1252) e separador (, ; tab |)
 - TXT: fallback de encoding (utf-8 → latin-1 → cp1252)
 - PDF: pdfplumber detecta automaticamente
+
+### Integridade e auditoria (v6.1)
+- SHA256 gerado automaticamente para cada arquivo anonimizado (.sha256)
+- Audit trail append-only em `logs/audit_trail.jsonl`
+- `--no-map` deleta mapa de correspondência após anonimização
+- `--purge-maps` deleta todos os mapas existentes em data/maps/
+- Validação anti-injection em nomes de arquivo
 
 ### Colunas financeiras
 - `bruto`, `líquido`, `salário`, `remuneração`, `vencimento` → tipo "salary"

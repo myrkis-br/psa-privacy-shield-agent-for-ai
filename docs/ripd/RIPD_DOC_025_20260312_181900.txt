@@ -1,0 +1,59 @@
+============================================================
+RELATÓRIO DE IMPACTO À PROTEÇÃO DE DADOS PESSOAIS (RIPD)
+PSA — Privacy Shield Agent v6.0
+Gerado em: 12/03/2026 18:19:00
+Base legal: Art. 38 LGPD + Resolução ANPD nº 4/2023
+============================================================
+
+1. IDENTIFICAÇÃO DO DOCUMENTO
+----------------------------------------
+   Código PSA:        DOC_025
+   Arquivo:           relatorio_clientes.html
+   Tipo:              documento
+   Subtipo:           html
+   Titulares estim.:  8 pessoas
+   Modo processo.:    MÁXIMO (100%)
+
+2. CLASSIFICAÇÃO DE RISCO
+----------------------------------------
+   Risk Score:        4/10
+   Classificação:     MÉDIA
+   Dado sensível:     NÃO
+   Categorias:        financeiro, cadastral, profissional
+   RIPD obrigatório:  NÃO
+   Cobertura:         anonimização completa + RIPD recomendado
+   Justificativa:     dado financeiro (salário/conta/PIX): +2 | dado cadastral (CPF/RG/endereço): +1 | dado profissional (cargo/função/lotação): +1
+
+3. ECONOMIA E EFICIÊNCIA
+----------------------------------------
+   Tokens originais:  792
+   Tokens anonimiz.:  1.169
+   Economia:          -47.6%
+   Custo sem PSA:     R$ 0,04
+   Custo com PSA:     R$ 0,06
+   Economia por doc:  R$ 0,00
+
+4. SEGURANÇA DA ANONIMIZAÇÃO
+----------------------------------------
+   Entidades anon.:   80
+   Dados vazados:     0 ✓ SEGURO
+   Padrões novos:     0
+
+5. CONFORMIDADE LGPD
+----------------------------------------
+   Classificação:     MÉDIA
+   Status:            Conformidade LGPD garantida
+   Risco residual:    ZERO
+   Base legal:        Art. 52 LGPD + Res. ANPD nº 4/2023
+
+6. CONCLUSÃO
+----------------------------------------
+   Este documento apresenta RISCO MÉDIO à proteção de dados
+   pessoais. Recomenda-se anonimização completa e a
+   elaboração de RIPD como boa prática.
+
+============================================================
+PSA — Privacy Shield Agent v6.0
+Este relatório foi gerado automaticamente e não substitui
+a análise do encarregado de proteção de dados (DPO).
+============================================================
