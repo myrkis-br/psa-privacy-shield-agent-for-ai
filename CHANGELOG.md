@@ -1,5 +1,70 @@
 # Changelog — PSA (Privacy Shield Agent)
 
+## [6.2.0] — 2026-03-13 — Operação CISO
+
+### Segurança — Credenciais removidas do histórico Git
+- Varredura completa com **gitleaks** + **detect-secrets**: 3 leaks no histórico, 15 nos arquivos atuais
+- `gerar_testes_gov.py` removido do histórico Git via **git-filter-repo**: 10 credenciais eliminadas
+- `gerar_email_corporativo.py` removido do histórico Git via **git-filter-repo**: 1 token JWT eliminado
+- Force push com histórico limpo: **0 leaks** em 23 commits
+
+### Segurança — Hardening permanente
+- **Pre-commit hook** gitleaks v8.18.2 instalado — bloqueia commits com credenciais
+- Credenciais fictícias em scripts de teste substituídas por `os.environ.get()` + `_TEST_CREDS`
+- `.env.example` criado com 10 variáveis de ambiente (sem valores)
+- `.gitignore` atualizado: `*.env`, `.env.*`, `secrets.yaml`, `secrets.json`, exceção para `.env.example`
+
+### Segurança — Política formal
+- **SECURITY.md** criado: política de zero credenciais, pre-commit obrigatório, como reportar vulnerabilidades, histórico de auditorias
+- 6 permissões de risco revogadas do Claude Code (`pip3 install:*`, `git push:*`, `cat logs/`, scripts inline)
+
+### Documentação
+- README.md: corrigido Python 3.9+, estrutura de diretórios, instruções de instalação com pre-commit
+- CLAUDE.md: nova seção 11 (Segurança Operacional)
+- PSA-Resumo-Fase02_v4.md: Dia 4 — operação CISO
+- SECURITY_AUDIT_v6.0.md: seção sobre credenciais hardcoded
+
+### Arquivos Modificados
+- `scripts/gerar_testes_gov.py` — `_TEST_CREDS` dict via `os.environ.get()`
+- `scripts/gerar_email_corporativo.py` — `_TEST_TOKEN` via `os.environ.get()`
+- `.gitignore` — padrões de segurança adicionados
+- `~/.claude/settings.local.json` — 6 permissões revogadas
+
+### Arquivos Criados
+- `SECURITY.md` — política formal de segurança
+- `.env.example` — template de variáveis de ambiente
+- `.pre-commit-config.yaml` — hook gitleaks
+
+---
+
+## [6.1.0] — 2026-03-12 — Security Hardening + 6 novos formatos
+
+### Novos formatos (ZERO vazamentos em todos)
+- **HTML**: preserva estrutura, anonimiza texto e atributos PII
+- **YAML**: detecta chaves secretas (password, token, etc.) + text_engine
+- **SQL**: rastreia blocos INSERT multi-linha, anonimiza string literals
+- **LOG**: anonimiza IPs, tokens, sessões + text_engine por linha
+- **VCF**: anonimiza campos vCard (FN, N, EMAIL, TEL, ADR, ORG, NOTE)
+- **PARQUET**: classificação automática de colunas, Faker pt_BR, C-01/C-02
+
+### Segurança — Score 82/100
+- **CVE-S-01**: SHA256 + hash de integridade para cada arquivo anonimizado
+- **CVE-S-02**: Audit trail append-only (`logs/audit_trail.jsonl`)
+- **CVE-S-03**: `--no-map` para deletar mapa de correspondência automaticamente
+- **CVE-S-04**: `--purge-maps` para limpar todos os mapas existentes
+- **CVE-S-05**: Validação anti-injection em nomes de arquivo
+
+### Novos scripts
+- `anonymize_html.py`, `anonymize_yaml.py`, `anonymize_sql.py`
+- `anonymize_log.py`, `anonymize_vcf.py`, `anonymize_parquet.py`
+- `anonymize_rtf.py`, `anonymize_odt.py`
+
+### Placar final
+- **21 extensões / 18 formatos únicos**
+- Testado com dados reais da Câmara dos Deputados (DOCs 020–036)
+
+---
+
 ## [2.0.0] — 2026-03-10
 
 ### Auditoria de Segurança

@@ -120,7 +120,35 @@ Se você encontrar uma vulnerabilidade de segurança neste projeto:
 
 ---
 
-## 7. Histórico de Auditorias
+## 7. Permissões do Claude Code
+
+Em 13/03/2026, foi realizada uma revisão completa das permissões do Claude Code.
+
+### Permissões revogadas (risco)
+
+| Permissão | Motivo |
+|-----------|--------|
+| `pip3 install:*` | Wildcard — permitia instalar qualquer pacote sem confirmar |
+| `git push:*` | Wildcard — permitia push para qualquer branch sem confirmar |
+| `cat logs/audit_trail.jsonl` | Logs podem conter PII residual |
+| 3x `python3 -c` / `python3 << PYEOF` | Scripts inline longos — impossíveis de revisar no prompt |
+
+### Permissões mantidas (56)
+
+- Execuções específicas do PSA (`python3 scripts/psa.py DOC_NNN ...`)
+- `git add:*` (risco baixo — staging não publica nada)
+- WebSearch e WebFetch para domínios governamentais
+- Ferramentas de segurança (gitleaks, detect-secrets)
+
+### Política
+
+- Nenhuma permissão wildcard deve ser concedida permanentemente
+- Cada push deve ser aprovado individualmente
+- Instalação de pacotes deve ser aprovada individualmente
+
+---
+
+## 8. Histórico de Auditorias
 
 | Data | Ação | Resultado |
 |------|------|-----------|
@@ -133,7 +161,7 @@ Se você encontrar uma vulnerabilidade de segurança neste projeto:
 
 ---
 
-## 8. Ferramentas de Segurança Instaladas
+## 9. Ferramentas de Segurança Instaladas
 
 | Ferramenta | Versão | Função |
 |------------|--------|--------|

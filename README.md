@@ -9,7 +9,7 @@
 [![Formats](https://img.shields.io/badge/Formats-21%20extensions-ff6b35?style=for-the-badge&logo=files&logoColor=white)](https://github.com/myrkis-br/psa-privacy-shield-agent-for-ai)
 [![Version](https://img.shields.io/badge/Version-v6.1-00ff9d?style=for-the-badge)](https://github.com/myrkis-br/psa-privacy-shield-agent-for-ai/releases)
 [![License](https://img.shields.io/badge/License-MIT-7b5ea7?style=for-the-badge)](LICENSE)
-[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![LGPD](https://img.shields.io/badge/LGPD-Compliant-green?style=for-the-badge)](https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm)
 [![GDPR](https://img.shields.io/badge/GDPR-Compliant-green?style=for-the-badge)](https://gdpr.eu)
 [![HIPAA](https://img.shields.io/badge/HIPAA-Compliant-green?style=for-the-badge)](https://www.hhs.gov/hipaa)
@@ -254,16 +254,29 @@ git clone https://github.com/myrkis-br/psa-privacy-shield-agent-for-ai.git
 cd psa-privacy-shield-agent-for-ai
 
 # Instale as dependencias
-pip install -r requirements.txt
+pip3 install pandas faker pdfplumber python-docx python-pptx openpyxl
+
+# Configure variaveis de ambiente (opcional — para scripts de teste)
+cp .env.example .env
+
+# Instale o pre-commit hook de seguranca (obrigatorio para contribuidores)
+pip3 install pre-commit
+pre-commit install
 
 # Execute
-python psa.py
+python3 scripts/psa.py --help
 ```
 
 ### Pre-requisitos
 
-- Python 3.10+
+- Python 3.9+
 - Chave de API da Anthropic (Claude) ou OpenAI (ChatGPT)
+
+### Seguranca do repositorio
+
+- **[SECURITY.md](SECURITY.md)** — Politica formal de zero credenciais hardcoded
+- **[.env.example](.env.example)** — Template de variaveis de ambiente (sem valores)
+- **Pre-commit hook** — Gitleaks v8.18.2 bloqueia commits com credenciais automaticamente
 
 ---
 
@@ -283,31 +296,41 @@ python psa.py
 
 ```
 psa-privacy-shield-agent-for-ai/
-├── psa.py                       # Interface unificada
-├── anonymizer.py                # CSV / XLSX
-├── text_engine.py               # Motor de regex compartilhado
-├── classifier.py                # Classificador de risco LGPD 1-10
-├── pattern_enricher.py          # Enriquecedor de padroes PII
-├── ripd_report.py               # Relatorio RIPD (Art. 38 LGPD)
-├── file_registry.py             # Registro DOC_NNN
-├── anonymize_document.py        # DOCX / TXT
-├── anonymize_pdf.py             # PDF
-├── anonymize_presentation.py    # PPTX
-├── anonymize_email.py           # EML / MSG
-├── anonymize_json.py            # JSON
-├── anonymize_xml.py             # XML / NF-e
-├── anonymize_html.py            # HTML
-├── anonymize_yaml.py            # YAML / YML
-├── anonymize_sql.py             # SQL
-├── anonymize_log.py             # LOG
-├── anonymize_vcf.py             # VCF (vCard)
-├── anonymize_parquet.py         # Parquet
-├── anonymize_rtf.py             # RTF
-├── anonymize_odt.py             # ODT
-├── CLAUDE.md                    # Instrucoes para Claude Code
-├── CHANGELOG.md                 # Historico de versoes
-└── docs/
-    └── SKILL-SPEC.md            # Especificacao tecnica
+├── scripts/
+│   ├── psa.py                       # Interface unificada CLI
+│   ├── file_registry.py             # Registro DOC_NNN
+│   ├── anonymizer.py                # CSV / XLSX
+│   ├── text_engine.py               # Motor de regex compartilhado
+│   ├── classifier.py                # Classificador de risco LGPD 1-10
+│   ├── pattern_enricher.py          # Enriquecedor de padroes PII
+│   ├── ripd_report.py               # Relatorio RIPD (Art. 38 LGPD)
+│   ├── anonymize_document.py        # DOCX / TXT
+│   ├── anonymize_pdf.py             # PDF
+│   ├── anonymize_presentation.py    # PPTX
+│   ├── anonymize_email.py           # EML / MSG
+│   ├── anonymize_json.py            # JSON
+│   ├── anonymize_xml.py             # XML / NF-e
+│   ├── anonymize_html.py            # HTML
+│   ├── anonymize_yaml.py            # YAML / YML
+│   ├── anonymize_sql.py             # SQL
+│   ├── anonymize_log.py             # LOG
+│   ├── anonymize_vcf.py             # VCF (vCard)
+│   ├── anonymize_parquet.py         # Parquet
+│   ├── anonymize_rtf.py             # RTF
+│   ├── anonymize_odt.py             # ODT
+│   ├── gerar_*.py                   # Geradores de dados de teste
+│   ├── analise_*.py                 # Scripts de analise
+│   └── test_*.py                    # Testes automatizados
+├── agents/                          # Definicao dos agentes
+├── data/                            # Dados (protegido pelo .gitignore)
+├── docs/                            # Documentacao e historico
+├── logs/                            # Logs (protegido pelo .gitignore)
+├── results/                         # Resultados de analises
+├── CLAUDE.md                        # Instrucoes para Claude Code
+├── CHANGELOG.md                     # Historico de versoes
+├── SECURITY.md                      # Politica de seguranca
+├── .env.example                     # Template de variaveis de ambiente
+└── .pre-commit-config.yaml          # Hook gitleaks anti-credenciais
 ```
 
 ---

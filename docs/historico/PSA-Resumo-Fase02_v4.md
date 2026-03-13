@@ -212,6 +212,33 @@
 | Encoding | ✅ | Auto-detecção multi-encoding |
 | RIPD automático | ✅ | Art. 38 LGPD compliance |
 
+### Conquistas da Fase 2 — Dia 4 (13/03/2026) — Operação CISO v6.2
+
+**Varredura completa de segurança + hardening permanente:**
+
+- **Passo 1 — Varredura**: gitleaks + detect-secrets em todo o histórico Git
+  - 3 leaks no histórico (gerar_testes_gov.py + gerar_email_corporativo.py)
+  - 15 ocorrências em arquivos atuais (4 arquivos)
+- **Passo 2 — Remoção do histórico**: git-filter-repo em 2 arquivos
+  - `gerar_testes_gov.py`: 10 credenciais (DB, Redis, SMTP, JWT, AWS, Datadog, webhook)
+  - `gerar_email_corporativo.py`: 1 token JWT
+  - Force push com histórico limpo: **0 leaks** em 23 commits
+- **Passo 3 — Hardening permanente**:
+  - Pre-commit hook gitleaks v8.18.2 — bloqueia commits com credenciais
+  - Credenciais substituídas por `os.environ.get()` + `_TEST_CREDS` dict
+  - `.env.example` com 10 variáveis (sem valores)
+  - `.gitignore` atualizado: `*.env`, `.env.*`, `secrets.yaml`, `secrets.json`
+- **Passo 4 — Política formal**:
+  - `SECURITY.md` criado (8 seções, histórico de auditorias)
+  - `.env.example` publicado
+- **Passo 5 — Revisão de permissões Claude Code**:
+  - 73 permissões mapeadas em `settings.local.json`
+  - 2 conexões MCP (Google Calendar + Gmail) identificadas
+- **Passo 6 — Revogação**:
+  - 6 permissões de risco removidas: `pip3 install:*`, `git push:*`, `cat logs/`, 3 scripts inline
+  - Zero permissões permanentes globais confirmado
+- **Documentação**: README, CLAUDE.md, CHANGELOG, SECURITY_AUDIT atualizados
+
 ### Próximos passos
 - [ ] Criar GPT customizado para o ChatGPT (GPT Store)
 - [ ] Configurar integração Gemini Workspace

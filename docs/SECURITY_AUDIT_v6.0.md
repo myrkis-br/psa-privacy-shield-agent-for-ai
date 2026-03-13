@@ -173,6 +173,40 @@ wc -l logs/audit_trail.jsonl
 
 ---
 
+## 8. CREDENCIAIS HARDCODED (Detectado em 13/03/2026)
+
+| Item | Status | Severidade |
+|------|--------|-----------|
+| `gerar_testes_gov.py` — 10 credenciais fictícias realistas | CORRIGIDO | ALTO |
+| `gerar_email_corporativo.py` — 1 token JWT | CORRIGIDO | MÉDIO |
+| Credenciais no histórico Git | CORRIGIDO | CRÍTICO |
+
+### Ferramentas utilizadas
+- **gitleaks** v8.18.2 — varredura do histórico Git completo
+- **detect-secrets** 1.5.0 — varredura dos arquivos atuais
+- **git-filter-repo** — reescrita segura do histórico Git
+
+### Ações realizadas
+1. Varredura completa: 3 leaks no histórico, 15 nos arquivos atuais
+2. `gerar_testes_gov.py` removido do histórico via filter-repo (10 credenciais)
+3. `gerar_email_corporativo.py` removido do histórico via filter-repo (1 token)
+4. Force push com histórico limpo — **0 leaks** confirmado
+5. Credenciais substituídas por `os.environ.get()` + `_TEST_CREDS`
+6. Pre-commit hook gitleaks instalado permanentemente
+7. `SECURITY.md` + `.env.example` criados
+8. 6 permissões de risco do Claude Code revogadas
+
+### Score atualizado após CISO
+
+| Área | Antes | Depois |
+|------|-------|--------|
+| Credenciais no código | Não avaliado | CORRIGIDO |
+| Credenciais no histórico Git | Não avaliado | CORRIGIDO |
+| Pre-commit anti-credenciais | Não existia | CORRIGIDO |
+| Política formal de segurança | Não existia | CORRIGIDO |
+
+---
+
 ## Resumo de Ações
 
 | # | Área | Achados | Ações | Status |

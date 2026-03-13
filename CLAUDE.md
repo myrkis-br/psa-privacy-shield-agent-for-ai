@@ -333,7 +333,30 @@ Execute mentalmente antes de qualquer ação com dados:
 
 ---
 
-## 11. Memória Persistente
+## 11. Segurança Operacional (CISO 13/03/2026)
+
+### Arquivos de segurança
+- **`SECURITY.md`** — Política formal de zero credenciais hardcoded
+- **`.env.example`** — Template com todas as variáveis de ambiente (sem valores)
+- **`.pre-commit-config.yaml`** — Hook gitleaks v8.18.2 bloqueia commits com credenciais
+
+### Regras de credenciais
+- **NUNCA** incluir senhas, tokens, chaves ou segredos no código-fonte
+- Credenciais fictícias para testes devem usar `os.environ.get()` com placeholders
+- O pre-commit hook valida automaticamente cada commit — **não usar `--no-verify`**
+
+### Operação CISO realizada em 13/03/2026
+- Varredura completa com gitleaks + detect-secrets: 3 leaks no histórico Git
+- `gerar_testes_gov.py` removido do histórico (filter-repo): 10 credenciais eliminadas
+- `gerar_email_corporativo.py` removido do histórico (filter-repo): 1 token eliminado
+- Credenciais substituídas por `os.environ.get()` com `_TEST_CREDS` dict
+- Pre-commit hook gitleaks instalado permanentemente
+- 6 permissões de risco revogadas do Claude Code (pip3 install:*, git push:*, logs, scripts inline)
+- Histórico Git reescrito e force push realizado — 0 leaks confirmado
+
+---
+
+## 12. Memória Persistente
 
 Salve notas de sessão em:
 ```
@@ -342,7 +365,7 @@ Salve notas de sessão em:
 
 ---
 
-## 12. Comportamento Geral
+## 13. Comportamento Geral
 
 - **Seja direto**: informe o usuário qual etapa está sendo executada
 - **Mostre o progresso**: "Executando PSA Guardião...", "Análise concluída..."
